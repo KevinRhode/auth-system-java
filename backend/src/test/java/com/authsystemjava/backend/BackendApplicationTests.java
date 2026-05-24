@@ -1,10 +1,10 @@
-package com.kevinrhode.portfolio_api;
+package com.authsystemjava.backend;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class PortfolioApiApplicationTests {
+class BackendApplicationTests {
 
 	@Test
 	void contextLoads() {

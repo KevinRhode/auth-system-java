@@ -1,13 +1,13 @@
-package com.kevinrhode.portfolio_api;
+package com.authsystemjava.backend;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class PortfolioApiApplication {
+public class BackendApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(PortfolioApiApplication.class, args);
+		SpringApplication.run(BackendApplication.class, args);
 	}
 
 }

@@ -8,8 +8,8 @@
 		<version>4.0.6</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.kevinrhode</groupId>
-	<artifactId>portfolio-api</artifactId>
+	<groupId>com.authsystemjava</groupId>
+	<artifactId>backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name/>
 	<description/>
@@ -84,20 +84,20 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-  		<groupId>io.jsonwebtoken</groupId>
+  			<groupId>io.jsonwebtoken</groupId>
   			<artifactId>jjwt-api</artifactId>
   			<version>0.12.3</version>
 		</dependency>
 		<dependency>
-	  		<groupId>io.jsonwebtoken</groupId>
-			<artifactId>jjwt-impl</artifactId>
+  			<groupId>io.jsonwebtoken</groupId>
+  			<artifactId>jjwt-impl</artifactId>
   			<version>0.12.3</version>
   			<scope>runtime</scope>
 		</dependency>
 		<dependency>
-	  		<groupId>io.jsonwebtoken</groupId>
+  			<groupId>io.jsonwebtoken</groupId>
   			<artifactId>jjwt-jackson</artifactId>
-	  		<version>0.12.3</version>
+  			<version>0.12.3</version>
   			<scope>runtime</scope>
 		</dependency>
 	</dependencies>
