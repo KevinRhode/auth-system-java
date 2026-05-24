@@ -2,6 +2,8 @@ package com.authsystemjava.backend.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "tokens")
@@ -12,13 +14,22 @@ import lombok.*;
 public class Token {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    private String value;
-    private boolean revoked;
+    @Column(unique = true, nullable = false)
+    private String token;
+
+    @Enumerated(EnumType.STRING)
+    private TokenType type;
+
+    @Column(nullable = false)
+    private LocalDateTime expiresAt;
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
 }
