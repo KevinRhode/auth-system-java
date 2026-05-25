@@ -1,1 +1,96 @@
 /* You can add global styles to this file, and also import other style files */
+// ── Variables ──────────────────────────────────────────
+:root {
+  --primary:     #6366f1;
+  --primary-dark:#1e17a0;
+  --danger:      #ef4444;
+  --bg:          #09215a;
+  --surface:     #1e293b;
+  --border:      #334155;
+  --text:        #f1f5f9;
+  --text-muted:  #94a3b8;
+}
+
+// ── Reset ───────────────────────────────────────────────
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+//   display: flex;
+}
+
+// ── Reusable classes ────────────────────────────────────
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.625rem 1.25rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+
+  &-primary {
+    background: var(--primary);
+    color: #fff;
+    width: 100%;
+    padding: 0.75rem;
+
+    &:hover { background: var(--primary-dark); }
+    &:disabled { opacity: 0.6; cursor: not-allowed; }
+  }
+
+  &-ghost {
+    background: transparent;
+    color: var(--text-muted);
+    &:hover { color: var(--text); }
+  }
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  color: var(--text);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.2s;
+
+  &:focus { border-color: var(--primary); }
+  &::placeholder { color: var(--text-muted); }
+}
+
+.error {
+  color: var(--danger);
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 2rem;
+}
+
+app-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+app-login {
+  display: flex;
+  flex: 1;
+}
