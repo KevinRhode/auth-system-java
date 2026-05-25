@@ -6,13 +6,13 @@ export const routes: Routes = [
   {
     path: 'login',
     title: 'Auth System Java',
-    loadComponent: () => import('./auth/login/login.component.ts')
+    loadComponent: () => import('./auth/login/login.component')
       .then(m => m.LoginComponent)
   },
   {
     path: 'register',
     title: 'Auth System Java',
-    loadComponent: () => import('./auth/register/register.component.ts')
+    loadComponent: () => import('./auth/register/register.component')
       .then(m => m.RegisterComponent)
   },
   {
