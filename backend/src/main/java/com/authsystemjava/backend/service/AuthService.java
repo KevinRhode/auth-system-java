@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 @RequiredArgsConstructor
@@ -17,8 +19,9 @@ public class AuthService {
     private final TokenRepository tokenRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
-    public AuthResponse register(RegisterRequest request) {
+    public AuthResponse register(RegisterRequest request, String userAgent) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email already in use");
         }
@@ -31,18 +34,22 @@ public class AuthService {
                 .build();
 
         userRepository.save(user);
-        return generateAuthResponse(user);
+        return generateAuthResponse(user, userAgent);
     }
 
-    public AuthResponse login(LoginRequest request) {
+    public AuthResponse login(LoginRequest request, String userAgent) {
+        log.debug("Login attempt for email: {}", request.getEmail());
+
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("Invalid credentials"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            log.warn("Login failed - email not found: {}", request.getEmail());
             throw new RuntimeException("Invalid credentials");
         }
 
-        return generateAuthResponse(user);
+        log.info("Login successful for: {}", request.getEmail());
+        return generateAuthResponse(user, userAgent);
     }
 
     public AuthResponse refresh(String refreshToken) {
@@ -54,9 +61,10 @@ public class AuthService {
             throw new RuntimeException("Refresh token expired");
         }
 
+        String existingUserAgent = session.getUserAgent();
         User user = session.getUser();
         sessionRepository.delete(session); // rotate — delete old session
-        return generateAuthResponse(user);
+        return generateAuthResponse(user, existingUserAgent);
     }
 
     public void logout(String refreshToken) {
@@ -64,13 +72,14 @@ public class AuthService {
                 .ifPresent(sessionRepository::delete);
     }
 
-    private AuthResponse generateAuthResponse(User user) {
+    private AuthResponse generateAuthResponse(User user, String userAgent) {
         String accessToken = jwtService.generateAccessToken(user.getId(), user.getRole().name());
         String refreshToken = jwtService.generateRefreshToken(user.getId());
 
         Session session = Session.builder()
                 .user(user)
                 .token(refreshToken)
+                .userAgent(userAgent)
                 .expiresAt(LocalDateTime.now().plusDays(7))
                 .build();
 
