@@ -46,7 +46,7 @@ public class EmailService {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom("noreply@yourdomain.com");
+            helper.setFrom("noreply@auth-system-java.com");
             helper.setTo(toEmail);
             helper.setSubject("Verify your email — AuthSystem");
             helper.setText(html, true);
