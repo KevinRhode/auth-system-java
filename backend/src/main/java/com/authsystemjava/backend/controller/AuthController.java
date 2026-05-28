@@ -2,7 +2,9 @@ package com.authsystemjava.backend.controller;
 
 import com.authsystemjava.backend.dto.*;
 import com.authsystemjava.backend.service.AuthService;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,7 +17,10 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<UserDto> register(@RequestBody RegisterRequest request, HttpServletRequest httpRequest, HttpServletResponse response) {
+    public ResponseEntity<UserDto> register(
+            @RequestBody RegisterRequest request,
+            HttpServletRequest httpRequest,
+            HttpServletResponse response) {
         String userAgent = httpRequest.getHeader("User-Agent");
         AuthResponse auth = authService.register(request, userAgent);
         setCookies(response, auth.getAccessToken(), auth.getRefreshToken());
@@ -23,7 +28,10 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<UserDto> login(@RequestBody LoginRequest request, HttpServletRequest httpRequest, HttpServletResponse response) {
+    public ResponseEntity<UserDto> login(
+            @RequestBody LoginRequest request,
+            HttpServletRequest httpRequest,
+            HttpServletResponse response) {
         String userAgent = httpRequest.getHeader("User-Agent");
         AuthResponse auth = authService.login(request, userAgent);
         setCookies(response, auth.getAccessToken(), auth.getRefreshToken());
@@ -31,7 +39,9 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<UserDto> refresh(RefreshTokenRequest request, HttpServletResponse response) {
+    public ResponseEntity<UserDto> refresh(
+            HttpServletRequest httpRequest,
+            HttpServletResponse response) {
         String refreshToken = getCookieValue(httpRequest, "refresh_token");
         if (refreshToken == null) {
             return ResponseEntity.status(401).build();
@@ -42,7 +52,8 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(RefreshTokenRequest request,
+    public ResponseEntity<Void> logout(
+            HttpServletRequest httpRequest,
             HttpServletResponse response) {
         String refreshToken = getCookieValue(httpRequest, "refresh_token");
         if (refreshToken != null) {
@@ -51,7 +62,7 @@ public class AuthController {
         clearCookies(response);
         return ResponseEntity.noContent().build();
     }
-    
+
     // ── Cookie helpers ────────────────────────────────────
 
     private void setCookies(HttpServletResponse response,
