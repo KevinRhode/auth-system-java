@@ -1,6 +1,7 @@
 package com.authsystemjava.backend.middleware;
 
 import com.authsystemjava.backend.service.JwtService;
+import com.authsystemjava.backend.util.CookieUtil;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import java.util.List;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
+    private final CookieUtil cookieUtil;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -24,7 +26,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                     FilterChain chain)
             throws ServletException, IOException {
 
-        String token = getCookieValue(request, "access_token");
+        String token = cookieUtil.getCookieValue(request, "access_token");
 
         if (token != null && jwtService.isTokenValid(token)) {
             String userId = jwtService.extractUserId(token);
@@ -36,15 +38,5 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         chain.doFilter(request, response);
-    }
-
-    private String getCookieValue(HttpServletRequest request, String name) {
-        if (request.getCookies() == null) return null;
-        for (Cookie cookie : request.getCookies()) {
-            if (cookie.getName().equals(name)) {
-                return cookie.getValue();
-            }
-        }
-        return null;
     }
 }

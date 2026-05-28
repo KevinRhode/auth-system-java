@@ -2,7 +2,7 @@ package com.authsystemjava.backend.controller;
 
 import com.authsystemjava.backend.dto.*;
 import com.authsystemjava.backend.service.AuthService;
-import jakarta.servlet.http.Cookie;
+import com.authsystemjava.backend.util.CookieUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final CookieUtil cookieUtil;
 
     @PostMapping("/register")
     public ResponseEntity<UserDto> register(
@@ -23,7 +24,7 @@ public class AuthController {
             HttpServletResponse response) {
         String userAgent = httpRequest.getHeader("User-Agent");
         AuthResponse auth = authService.register(request, userAgent);
-        setCookies(response, auth.getAccessToken(), auth.getRefreshToken());
+        cookieUtil.setCookies(response, auth.getAccessToken(), auth.getRefreshToken());
         return ResponseEntity.ok(auth.getUser());
     }
 
@@ -34,7 +35,7 @@ public class AuthController {
             HttpServletResponse response) {
         String userAgent = httpRequest.getHeader("User-Agent");
         AuthResponse auth = authService.login(request, userAgent);
-        setCookies(response, auth.getAccessToken(), auth.getRefreshToken());
+        cookieUtil.setCookies(response, auth.getAccessToken(), auth.getRefreshToken());
         return ResponseEntity.ok(auth.getUser());
     }
 
@@ -42,12 +43,12 @@ public class AuthController {
     public ResponseEntity<UserDto> refresh(
             HttpServletRequest httpRequest,
             HttpServletResponse response) {
-        String refreshToken = getCookieValue(httpRequest, "refresh_token");
+        String refreshToken = cookieUtil.getCookieValue(httpRequest, "refresh_token");
         if (refreshToken == null) {
             return ResponseEntity.status(401).build();
         }
         AuthResponse auth = authService.refresh(refreshToken);
-        setCookies(response, auth.getAccessToken(), auth.getRefreshToken());
+        cookieUtil.setCookies(response, auth.getAccessToken(), auth.getRefreshToken());
         return ResponseEntity.ok(auth.getUser());
     }
 
@@ -55,42 +56,11 @@ public class AuthController {
     public ResponseEntity<Void> logout(
             HttpServletRequest httpRequest,
             HttpServletResponse response) {
-        String refreshToken = getCookieValue(httpRequest, "refresh_token");
+        String refreshToken = cookieUtil.getCookieValue(httpRequest, "refresh_token");
         if (refreshToken != null) {
             authService.logout(refreshToken);
         }
-        clearCookies(response);
+        cookieUtil.clearCookies(response);
         return ResponseEntity.noContent().build();
-    }
-
-    // ── Cookie helpers ────────────────────────────────────
-
-    private void setCookies(HttpServletResponse response,
-                            String accessToken,
-                            String refreshToken) {
-        response.addHeader("Set-Cookie", buildCookie("access_token", accessToken, 900));
-        response.addHeader("Set-Cookie", buildCookie("refresh_token", refreshToken, 604800));
-    }
-
-    private void clearCookies(HttpServletResponse response) {
-        response.addHeader("Set-Cookie", buildCookie("access_token", "", 0));
-        response.addHeader("Set-Cookie", buildCookie("refresh_token", "", 0));
-    }
-
-    private String buildCookie(String name, String value, long maxAge) {
-        return String.format(
-            "%s=%s; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=%d",
-            name, value, maxAge
-        );
-    }
-
-    private String getCookieValue(HttpServletRequest request, String name) {
-        if (request.getCookies() == null) return null;
-        for (Cookie cookie : request.getCookies()) {
-            if (cookie.getName().equals(name)) {
-                return cookie.getValue();
-            }
-        }
-        return null;
     }
 }
