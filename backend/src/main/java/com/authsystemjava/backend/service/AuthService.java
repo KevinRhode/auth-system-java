@@ -19,6 +19,7 @@ public class AuthService {
     private final TokenRepository tokenRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     public AuthResponse register(RegisterRequest request, String userAgent) {
@@ -34,7 +35,66 @@ public class AuthService {
                 .build();
 
         userRepository.save(user);
+
+        // generate and save verification token
+        String rawToken = UUID.randomUUID().toString();
+        Token verificationToken = Token.builder()
+                .user(user)
+                .token(rawToken)
+                .type(TokenType.EMAIL_VERIFICATION)
+                .expiresAt(LocalDateTime.now().plusHours(24))
+                .build();
+
+        tokenRepository.save(verificationToken);
+
+        // send email
+        emailService.sendVerificationEmail(user.getEmail(), user.getName(), rawToken);
+
+        log.info("User registered: {}", user.getEmail());
+
         return generateAuthResponse(user, userAgent);
+    }
+
+    public void verifyEmail(String rawToken) {
+        Token token = tokenRepository
+                .findByTokenAndType(rawToken, TokenType.EMAIL_VERIFICATION)
+                .orElseThrow(() -> new RuntimeException("Invalid verification token"));
+
+        if (token.getExpiresAt().isBefore(LocalDateTime.now())) {
+            tokenRepository.delete(token);
+            throw new RuntimeException("Verification token expired");
+        }
+
+        User user = token.getUser();
+        user.setEmailVerified(true);
+        userRepository.save(user);
+
+        tokenRepository.delete(token);
+        log.info("Email verified for: {}", user.getEmail());
+    }
+
+    public void resendVerification(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (user.getEmailVerified()) {
+            throw new RuntimeException("Email already verified");
+        }
+
+        // delete any existing verification tokens
+        tokenRepository.deleteByUserIdAndType(user.getId(), TokenType.EMAIL_VERIFICATION);
+
+        String rawToken = UUID.randomUUID().toString();
+        Token verificationToken = Token.builder()
+                .user(user)
+                .token(rawToken)
+                .type(TokenType.EMAIL_VERIFICATION)
+                .expiresAt(LocalDateTime.now().plusHours(24))
+                .build();
+
+        tokenRepository.save(verificationToken);
+        emailService.sendVerificationEmail(user.getEmail(), user.getName(), rawToken);
+        log.info("Verification email resent to: {}", user.getEmail());
     }
 
     public AuthResponse login(LoginRequest request, String userAgent) {
@@ -46,6 +106,10 @@ public class AuthService {
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             log.warn("Login failed - email not found: {}", request.getEmail());
             throw new RuntimeException("Invalid credentials");
+        }
+
+        if (!user.getEmailVerified()) {
+            throw new RuntimeException("EMAIL_NOT_VERIFIED");
         }
 
         log.info("Login successful for: {}", request.getEmail());

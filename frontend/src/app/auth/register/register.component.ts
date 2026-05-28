@@ -48,14 +48,19 @@ export class RegisterComponent {
   constructor(private authService: AuthService, private router: Router) {}
 
   onSubmit() {
-    this.loading = true;
-    this.error = '';
-    this.authService.register({ name: this.name, email: this.email, password: this.password }).subscribe({
-      next: () => this.router.navigate(['/dashboard']),
-      error: err => {
-        this.error = err.error?.message || 'Registration failed';
-        this.loading = false;
-      }
-    });
-  }
+  this.loading = true;
+  this.error = '';
+  this.authService.register({
+    name: this.name,
+    email: this.email,
+    password: this.password
+  }).subscribe({
+    next: () => this.router.navigate(['/verify-email-sent'],
+      { queryParams: { email: this.email } }),
+    error: err => {
+      this.error = err.error?.message || 'Registration failed';
+      this.loading = false;
+    }
+  });
+}
 }

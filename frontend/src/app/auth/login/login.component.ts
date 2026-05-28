@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-login',
@@ -14,7 +15,17 @@ import { CommonModule } from '@angular/common';
     <div class="auth-card">
     <h2>Welcome back</h2>
     <p class="subtitle">Sign in to your account</p>
-
+    @if (verified) {
+      <div class="alert alert-success">
+        ✅ Email verified — you can now log in.
+      </div>
+    }
+    @if (unverified) {
+      <div class="alert alert-warning">
+        ⚠️ Please verify your email before logging in.
+        <a routerLink="/verify-email-sent" [queryParams]="{ email: email }">Resend link</a>
+      </div>
+    }
     <form (ngSubmit)="onSubmit()">
       <div class="form-group">
         <label>Email</label>
@@ -43,8 +54,14 @@ export class LoginComponent {
   password = '';
   error = '';
   loading = false;
+  verified = false;
+  unverified = false;
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(private authService: AuthService, private router: Router, private route: ActivatedRoute) {
+  }
+  ngOnInit() {
+    this.verified = this.route.snapshot.queryParamMap.get('verified') === 'true';
+  }
 
   onSubmit() {
     this.loading = true;
@@ -52,8 +69,12 @@ export class LoginComponent {
     this.authService.login({ email: this.email, password: this.password }).subscribe({
       next: () => this.router.navigate(['/dashboard']),
       error: err => {
-        this.error = err.error?.message || 'Invalid credentials';
-        this.loading = false;
+        if (err.error?.message === 'EMAIL_NOT_VERIFIED') {
+          this.unverified = true;
+        } else {
+          this.error = err.error?.message || 'Invalid credentials';
+        }
+          this.loading = false;
       }
     });
   }

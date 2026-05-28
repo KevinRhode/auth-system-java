@@ -8,6 +8,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -16,6 +19,9 @@ public class AuthController {
 
     private final AuthService authService;
     private final CookieUtil cookieUtil;
+
+    @Value("${app.base-url}")
+    private String frontendUrl;
 
     @PostMapping("/register")
     public ResponseEntity<UserDto> register(
@@ -62,5 +68,25 @@ public class AuthController {
         }
         cookieUtil.clearCookies(response);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/verify-email")
+    public ResponseEntity<Void> verifyEmail(
+        @RequestParam String token,
+        HttpServletResponse response) throws IOException {
+        try {
+            authService.verifyEmail(token);
+            response.sendRedirect(frontendUrl + "/login?verified=true");
+        } catch (Exception e) {
+            response.sendRedirect(frontendUrl + "/verify-email-error");
+        }
+        return ResponseEntity.ok().build();
+    }   
+
+    @PostMapping("/resend-verification")
+    public ResponseEntity<Map<String, String>> resendVerification(
+        @RequestBody Map<String, String> body) {
+        authService.resendVerification(body.get("email"));
+        return ResponseEntity.ok(Map.of("message", "Verification email sent"));
     }
 }

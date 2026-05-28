@@ -28,5 +28,20 @@ export const routes: Routes = [
       }
     ]
   },
-  { path: '**', redirectTo: 'login' }
+  { path: '**', redirectTo: 'login' },
+  {
+  path: 'verify-email-sent',
+  loadComponent: () => import('./auth/verify-email-sent/verify-email-sent.component')
+    .then(m => m.VerifyEmailSentComponent)
+},
+{
+  path: 'verify-email',
+  loadComponent: () => import('./auth/verify-email/verify-email.component')
+    .then(m => m.VerifyEmailComponent)
+},
+{
+  path: 'verify-email-error',
+  loadComponent: () => import('./auth/verify-email-error/verify-email-error.component')
+    .then(m => m.VerifyEmailErrorComponent)
+},
 ];
