@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Value;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Map;
@@ -70,18 +71,11 @@ public class AuthController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/verify-email")
-    public ResponseEntity<Void> verifyEmail(
-        @RequestParam String token,
-        HttpServletResponse response) throws IOException {
-        try {
-            authService.verifyEmail(token);
-            response.sendRedirect(frontendUrl + "/login?verified=true");
-        } catch (Exception e) {
-            response.sendRedirect(frontendUrl + "/verify-email-error");
-        }
-        return ResponseEntity.ok().build();
-    }   
+   @GetMapping("/verify-email")
+    public ResponseEntity<Map<String, String>> verifyEmail(@RequestParam String token) {
+        authService.verifyEmail(token);
+        return ResponseEntity.ok(Map.of("message", "Email verified successfully"));
+    }
 
     @PostMapping("/resend-verification")
     public ResponseEntity<Map<String, String>> resendVerification(
