@@ -24,23 +24,27 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                     FilterChain chain)
             throws ServletException, IOException {
 
-        String header = request.getHeader("Authorization");
+        String token = getCookieValue(request, "access_token");
 
-        if (header == null || !header.startsWith("Bearer ")) {
-            chain.doFilter(request, response);
-            return;
-        }
-
-        String token = header.substring(7);
-
-        if (jwtService.isTokenValid(token)) {
+        if (token != null && jwtService.isTokenValid(token)) {
             String userId = jwtService.extractUserId(token);
             var auth = new UsernamePasswordAuthenticationToken(
-                    userId, null, List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                    userId, null,
+                    List.of(new SimpleGrantedAuthority("ROLE_USER"))
             );
             SecurityContextHolder.getContext().setAuthentication(auth);
         }
 
         chain.doFilter(request, response);
+    }
+
+    private String getCookieValue(HttpServletRequest request, String name) {
+        if (request.getCookies() == null) return null;
+        for (Cookie cookie : request.getCookies()) {
+            if (cookie.getName().equals(name)) {
+                return cookie.getValue();
+            }
+        }
+        return null;
     }
 }
