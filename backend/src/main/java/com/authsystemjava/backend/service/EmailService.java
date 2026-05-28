@@ -21,6 +21,9 @@ public class EmailService {
     @Value("${app.base-url}")
     private String baseUrl;
 
+    @Value("${app.email.from}")
+    private String fromEmail;
+
     public void sendVerificationEmail(String toEmail, String name, String token) {
         String link = baseUrl + "/verify-email?token=" + token;
 
@@ -46,7 +49,7 @@ public class EmailService {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom("noreply@auth-system-java.com");
+            helper.setFrom(fromEmail);
             helper.setTo(toEmail);
             helper.setSubject("Verify your email — AuthSystem");
             helper.setText(html, true);
