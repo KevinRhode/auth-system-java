@@ -6,6 +6,13 @@ import { tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { TokenService } from './token.service';
 
+export interface UserDto {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private api = `${environment.apiUrl}/api/auth`;
@@ -17,31 +24,35 @@ export class AuthService {
   ) {}
 
   register(data: { name: string; email: string; password: string }) {
-    return this.http.post<any>(`${this.api}/register`, data).pipe(
-      tap(res => this.tokenService.setTokens(res.accessToken, res.refreshToken))
+    return this.http.post<UserDto>(`${this.api}/register`, data, {
+      withCredentials: true
+    }).pipe(
+      tap(() => this.tokenService.setAuthenticated())
     );
   }
 
   login(data: { email: string; password: string }) {
-    return this.http.post<any>(`${this.api}/login`, data).pipe(
-      tap(res => this.tokenService.setTokens(res.accessToken, res.refreshToken))
+    return this.http.post<UserDto>(`${this.api}/login`, data, {
+      withCredentials: true
+    }).pipe(
+      tap(() => this.tokenService.setAuthenticated())
     );
   }
 
   logout() {
-    const refreshToken = this.tokenService.getRefreshToken();
-    return this.http.post(`${this.api}/logout`, { refreshToken }).pipe(
+    return this.http.post(`${this.api}/logout`, {}, {
+      withCredentials: true
+    }).pipe(
       tap(() => {
-        this.tokenService.clearTokens();
+        this.tokenService.clearAuthenticated();
         this.router.navigate(['/login']);
       })
     );
   }
 
   refresh() {
-    const refreshToken = this.tokenService.getRefreshToken();
-    return this.http.post<any>(`${this.api}/refresh`, { refreshToken }).pipe(
-      tap(res => this.tokenService.setTokens(res.accessToken, res.refreshToken))
-    );
+    return this.http.post<UserDto>(`${this.api}/refresh`, {}, {
+      withCredentials: true
+    });
   }
 }

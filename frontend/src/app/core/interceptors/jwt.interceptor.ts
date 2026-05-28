@@ -1,11 +1,8 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 
 export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
-  const token = localStorage.getItem('access_token');
-  if (token) {
-    req = req.clone({
-      setHeaders: { Authorization: `Bearer ${token}` }
-    });
-  }
-  return next(req);
+  const reqWithCredentials = req.clone({
+    withCredentials: true  // sends cookies automatically on every request
+  });
+  return next(reqWithCredentials);
 };

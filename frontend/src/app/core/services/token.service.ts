@@ -1,30 +1,22 @@
-// core/services/token.service.ts
 import { Injectable } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class TokenService {
-  private readonly ACCESS_KEY = 'access_token';
-  private readonly REFRESH_KEY = 'refresh_token';
 
-  setTokens(accessToken: string, refreshToken: string) {
-    localStorage.setItem(this.ACCESS_KEY, accessToken);
-    localStorage.setItem(this.REFRESH_KEY, refreshToken);
-  }
-
-  getAccessToken(): string | null {
-    return localStorage.getItem(this.ACCESS_KEY);
-  }
-
-  getRefreshToken(): string | null {
-    return localStorage.getItem(this.REFRESH_KEY);
-  }
-
-  clearTokens() {
-    localStorage.removeItem(this.ACCESS_KEY);
-    localStorage.removeItem(this.REFRESH_KEY);
-  }
+  // cookies are httpOnly — JS cannot read them
+  // browser sends them automatically on every request
 
   isLoggedIn(): boolean {
-    return !!this.getAccessToken();
+    // since we can't read httpOnly cookies from JS,
+    // track login state in memory or sessionStorage
+    return sessionStorage.getItem('authenticated') === 'true';
+  }
+
+  setAuthenticated() {
+    sessionStorage.setItem('authenticated', 'true');
+  }
+
+  clearAuthenticated() {
+    sessionStorage.removeItem('authenticated');
   }
 }
