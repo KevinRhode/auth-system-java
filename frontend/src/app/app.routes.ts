@@ -27,8 +27,7 @@ export const routes: Routes = [
           .then(m => m.DashboardComponent)
       }
     ]
-  },
-  { path: '**', redirectTo: 'login' },
+  },  
   {
   path: 'verify-email-sent',
   loadComponent: () => import('./auth/verify-email-sent/verify-email-sent.component')
@@ -44,4 +43,5 @@ export const routes: Routes = [
   loadComponent: () => import('./auth/verify-email-error/verify-email-error.component')
     .then(m => m.VerifyEmailErrorComponent)
 },
+{ path: '**', redirectTo: 'login' }
 ];
