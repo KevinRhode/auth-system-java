@@ -117,6 +117,7 @@ public class AuthService {
         return generateAuthResponse(user, userAgent);
     }
 
+    @Transactional
     public AuthResponse refresh(String refreshToken) {
         Session session = sessionRepository.findByToken(refreshToken)
                 .orElseThrow(() -> new RuntimeException("Invalid refresh token"));
@@ -132,6 +133,7 @@ public class AuthService {
         return generateAuthResponse(user, existingUserAgent);
     }
 
+    @Transactional
     public void logout(String refreshToken) {
         sessionRepository.findByToken(refreshToken)
                 .ifPresent(sessionRepository::delete);

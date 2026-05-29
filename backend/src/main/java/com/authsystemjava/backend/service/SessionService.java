@@ -18,7 +18,8 @@ public class SessionService {
                 .map(SessionDto::from)
                 .toList();
     }
-
+    
+    @Transactional
     public void revokeSession(String sessionId, String userId) {
         sessionRepository.findById(sessionId).ifPresent(session -> {
             if (session.getUser().getId().equals(userId)) {
