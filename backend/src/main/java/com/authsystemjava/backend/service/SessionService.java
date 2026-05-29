@@ -5,6 +5,7 @@ import com.authsystemjava.backend.repository.SessionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -18,7 +19,7 @@ public class SessionService {
                 .map(SessionDto::from)
                 .toList();
     }
-    
+
     @Transactional
     public void revokeSession(String sessionId, String userId) {
         sessionRepository.findById(sessionId).ifPresent(session -> {
