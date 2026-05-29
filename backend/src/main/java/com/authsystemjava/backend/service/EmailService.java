@@ -24,7 +24,7 @@ public class EmailService {
     private String fromEmail;
 
     public void sendVerificationEmail(String toEmail, String name, String token) {
-        String link = baseUrl + "/verify-email?token=" + token;
+        String link = baseUrl + "/api/auth/verify-email?token=" + token;
 
         String html = """
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
