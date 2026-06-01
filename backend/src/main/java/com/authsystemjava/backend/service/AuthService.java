@@ -56,7 +56,8 @@ public class AuthService {
 
         return generateAuthResponse(user, userAgent);
     }
-
+    
+    @Transactional
     public void verifyEmail(String rawToken) {
         Token token = tokenRepository
                 .findByTokenAndType(rawToken, TokenType.EMAIL_VERIFICATION)
