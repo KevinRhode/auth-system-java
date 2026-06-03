@@ -121,18 +121,46 @@ public class AuthService {
 
     @Transactional
     public AuthResponse refresh(String refreshToken) {
-        Session session = sessionRepository.findByToken(refreshToken)
-                .orElseThrow(() -> new RuntimeException("Invalid refresh token"));
+    Session session = sessionRepository.findByToken(refreshToken)
+            .orElseThrow(() -> new RuntimeException("Invalid refresh token"));
 
         if (session.getExpiresAt().isBefore(LocalDateTime.now())) {
             sessionRepository.delete(session);
             throw new RuntimeException("Refresh token expired");
         }
 
-        String existingUserAgent = session.getUserAgent();
         User user = session.getUser();
-        sessionRepository.delete(session); // rotate — delete old session
-        return generateAuthResponse(user, existingUserAgent);
+
+        // only rotate refresh token if less than 1 day remaining
+        boolean shouldRotate = session.getExpiresAt()
+            .isBefore(LocalDateTime.now().plusDays(1));
+
+        String newAccessToken = jwtService.generateAccessToken(
+            user.getId(), user.getRole().name());
+        String returnedRefreshToken = refreshToken;
+
+        if (shouldRotate) {
+            log.info("Rotating refresh token for user: {}", user.getEmail());
+            String newRefreshToken = jwtService.generateRefreshToken(user.getId());
+
+            sessionRepository.delete(session);
+
+            Session newSession = Session.builder()
+                .user(user)
+                .token(newRefreshToken)
+                .userAgent(session.getUserAgent())
+                .expiresAt(LocalDateTime.now().plusDays(7))
+                .build();
+
+            sessionRepository.save(newSession);
+            returnedRefreshToken = newRefreshToken;
+        }
+
+        return AuthResponse.builder()
+            .accessToken(newAccessToken)
+            .refreshToken(returnedRefreshToken)
+            .user(UserDto.from(user))
+            .build();
     }
 
     @Transactional

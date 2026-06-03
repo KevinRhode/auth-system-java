@@ -1,13 +1,12 @@
 import { Component, OnInit, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
-import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule, CommonModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink],
   styleUrl: './login.component.scss',
   template: `
     <div class="auth-card">
@@ -21,27 +20,49 @@ import { CommonModule } from '@angular/common';
       @if (unverified()) {
         <div class="alert alert-warning">
           ⚠️ Please verify your email before logging in.
-          <a routerLink="/verify-email-sent" [queryParams]="{ email: email }">Resend link</a>
+          <a routerLink="/verify-email-sent"
+            [queryParams]="{ email: form.get('email')?.value }">
+            Resend link
+          </a>
         </div>
       }
 
-      <form (ngSubmit)="onSubmit()">
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
         <div class="form-group">
           <label>Email</label>
-          <input type="email" [(ngModel)]="email" name="email" placeholder="you@example.com" required />
-        </div>
-        <div class="form-group">
-          <label>Password</label>
-          <input type="password" [(ngModel)]="password" name="password" placeholder="••••••••" required />
+          <input
+            type="email"
+            formControlName="email"
+            placeholder="you@example.com"
+            [class.invalid]="isInvalid('email')"
+          />
+          @if (isInvalid('email')) {
+            <span class="field-error">{{ getError('email') }}</span>
+          }
         </div>
 
-        @if (error()) {
-          <p class="error">{{ error() }}</p>
+        <div class="form-group">
+          <label>Password</label>
+          <input
+            type="password"
+            formControlName="password"
+            placeholder="••••••••"
+            [class.invalid]="isInvalid('password')"
+          />
+          @if (isInvalid('password')) {
+            <span class="field-error">{{ getError('password') }}</span>
+          }
+        </div>
+
+        @if (serverError()) {
+          <p class="error">{{ serverError() }}</p>
         }
 
         <button class="btn btn-primary" type="submit" [disabled]="loading()">
           {{ loading() ? 'Signing in...' : 'Sign in' }}
         </button>
+
       </form>
 
       <div class="form-footer">
@@ -51,19 +72,23 @@ import { CommonModule } from '@angular/common';
   `
 })
 export class LoginComponent implements OnInit {
-  email = '';
-  password = '';
-
-  error = signal('');
+  form: FormGroup;
+  serverError = signal('');
   loading = signal(false);
   verified = signal(false);
   unverified = signal(false);
 
   constructor(
+    private fb: FormBuilder,
     private authService: AuthService,
     private router: Router,
     private route: ActivatedRoute
-  ) {}
+  ) {
+    this.form = this.fb.group({
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', Validators.required]
+    });
+  }
 
   ngOnInit() {
     this.verified.set(
@@ -71,26 +96,52 @@ export class LoginComponent implements OnInit {
     );
   }
 
+  isInvalid(field: string): boolean {
+    const control = this.form.get(field);
+    return !!(control && control.invalid && (control.dirty || control.touched));
+  }
+
+  getError(field: string): string {
+    const control = this.form.get(field);
+    if (control?.errors?.['required']) return 'This field is required';
+    if (control?.errors?.['email']) return 'Enter a valid email address';
+    if (control?.errors?.['server']) return control.errors['server'];
+    return '';
+  }
+
   onSubmit() {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
     this.loading.set(true);
-    this.error.set('');
+    this.serverError.set('');
     this.unverified.set(false);
 
-    this.authService.login({ email: this.email, password: this.password }).subscribe({
+    this.authService.login(this.form.value).subscribe({
       next: () => this.router.navigate(['/dashboard']),
       error: err => {
-        const errorMsg = err.error?.error || err.error?.message || '';
+        const errorMsg = err.error?.error || '';
 
         if (errorMsg === 'EMAIL_NOT_VERIFIED') {
           this.unverified.set(true);
+        } else if (errorMsg === 'VALIDATION_FAILED') {
+          this.applyServerErrors(err.error.fields);
         } else if (errorMsg === 'Invalid credentials') {
-          this.error.set('Invalid email or password');
+          this.serverError.set('Invalid email or password');
         } else {
-          this.error.set('Something went wrong. Please try again.');
+          this.serverError.set('Something went wrong. Please try again.');
         }
 
         this.loading.set(false);
       }
+    });
+  }
+
+  private applyServerErrors(fields: Record<string, string>) {
+    Object.entries(fields).forEach(([field, message]) => {
+      this.form.get(field)?.setErrors({ server: message });
     });
   }
 }

@@ -1,5 +1,5 @@
 // core/services/auth.service.ts
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { tap } from 'rxjs/operators';
@@ -16,10 +16,11 @@ export interface UserDto {
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private api = `${environment.apiUrl}/api/auth`;
+  currentUser = signal<UserDto | null>(null);
 
   constructor(
     private http: HttpClient,
-    private tokenService: TokenService,
+    public tokenService: TokenService,
     private router: Router
   ) {}
 
@@ -27,7 +28,10 @@ export class AuthService {
     return this.http.post<UserDto>(`${this.api}/register`, data, {
       withCredentials: true
     }).pipe(
-      tap(() => this.tokenService.setAuthenticated())
+      tap((user) => {
+        this.tokenService.setAuthenticated();
+        this.currentUser.set(user);
+      })
     );
   }
 
@@ -35,7 +39,10 @@ export class AuthService {
     return this.http.post<UserDto>(`${this.api}/login`, data, {
       withCredentials: true
     }).pipe(
-      tap(() => this.tokenService.setAuthenticated())
+      tap((user) => {
+        this.tokenService.setAuthenticated();
+        this.currentUser.set(user);
+      })
     );
   }
 
@@ -45,6 +52,7 @@ export class AuthService {
     }).pipe(
       tap(() => {
         this.tokenService.clearAuthenticated();
+        this.currentUser.set(null);
         this.router.navigate(['/login']);
       })
     );
@@ -53,6 +61,8 @@ export class AuthService {
   refresh() {
     return this.http.post<UserDto>(`${this.api}/refresh`, {}, {
       withCredentials: true
-    });
+    }).pipe(
+      tap(user => this.currentUser.set(user))
+    );;
   }
 }

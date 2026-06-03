@@ -90,5 +90,42 @@
       margin-left: 0.25rem;
     }
   }
-}
+  }
+
+
+  .form-group {
+  input.invalid {
+    border-color: var(--danger);
+
+    &:focus { border-color: var(--danger); }
+  }
+  }
+
+.field-error {
+  color: var(--danger);
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  display: block;
+  }
+
+.password-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-top: 0.5rem;
+
+  span {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    transition: color 0.2s;
+
+    &.met { color: #22c55e; }
+  }
+  }
+  form {
+    p.error {      
+      font-size: 0.875rem;
+      margin-bottom: 1rem;
+    }
+  }
 }

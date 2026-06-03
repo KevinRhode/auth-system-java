@@ -5,6 +5,7 @@ import com.authsystemjava.backend.service.AuthService;
 import com.authsystemjava.backend.util.CookieUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,7 +27,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<UserDto> register(
-            @RequestBody RegisterRequest request,
+            @Valid @RequestBody RegisterRequest request,
             HttpServletRequest httpRequest,
             HttpServletResponse response) {
         String userAgent = httpRequest.getHeader("User-Agent");
@@ -37,7 +38,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<UserDto> login(
-            @RequestBody LoginRequest request,
+            @Valid @RequestBody LoginRequest request,
             HttpServletRequest httpRequest,
             HttpServletResponse response) {
         String userAgent = httpRequest.getHeader("User-Agent");

@@ -4,9 +4,8 @@
   justify-content: center;
   min-height: 100vh;
   padding: 1rem;
-}
 
-.auth-card {
+  .auth-card {
   width: 100%;
   max-width: 420px;
   background: var(--surface);
@@ -68,3 +67,43 @@
     &:hover { text-decoration: underline; }
   }
 }
+
+ .form-group {
+  input.invalid {
+    border-color: var(--danger);
+
+    &:focus { border-color: var(--danger); }
+  }
+  }
+
+.field-error {
+  color: var(--danger);
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  display: block;
+  }
+
+.password-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-top: 0.5rem;
+
+  span {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    transition: color 0.2s;
+
+    &.met { color: #22c55e; }
+  }
+  }
+  
+  form {
+    p.error {      
+      font-size: 0.875rem;
+      margin-bottom: 1rem;
+    }
+  }
+}
+
+

@@ -33,8 +33,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                // .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+            .authorizeHttpRequests(auth -> auth                
                 .requestMatchers("/health", "/debug").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .anyRequest().authenticated()
@@ -55,8 +54,8 @@ public class SecurityConfig {
         config.setAllowedOrigins(List.of(allowedOrigins.split(",")));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Content-Type", "Authorization"));
-        config.setAllowCredentials(true); // ← required for cookies to work cross-origin
-        config.setExposedHeaders(List.of("Set-Cookie")); // ← allows browser to read Set-Cookie
+        config.setAllowCredentials(true); //required for cookies to work cross-origin
+        config.setExposedHeaders(List.of("Set-Cookie")); //allows browser to read Set-Cookie
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
