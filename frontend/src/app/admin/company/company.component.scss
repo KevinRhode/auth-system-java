@@ -1,0 +1,240 @@
+.company-page {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 2rem;
+
+  h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+  }
+
+  .subtitle {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+    font-size: 0.875rem;
+  }
+
+  .btn-primary {
+    display: inline-block;
+    text-decoration: none;
+    padding: 0.75rem 1.5rem;
+    background: var(--primary);
+    color: #fff;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: background 0.2s;
+    &:hover { background: var(--primary-dark); }
+  }
+}
+
+.invite-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+
+  h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+
+  .invite-form {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+
+    input {
+      flex: 1;
+      min-width: 200px;
+      padding: 0.65rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      color: var(--text);
+      font-size: 0.875rem;
+      outline: none;
+      &:focus { border-color: var(--primary); }
+      &::placeholder { color: var(--text-muted); }
+    }
+
+    select {
+      padding: 0.65rem 0.75rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      color: var(--text);
+      font-size: 0.875rem;
+      outline: none;
+      cursor: pointer;
+    }
+  }
+}
+
+.table-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+
+  h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+.members-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    text-align: left;
+    padding: 0.875rem 1.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+    &:last-child { border-bottom: none; }
+    &:hover { background: var(--bg); }
+  }
+
+  td {
+    padding: 1rem 1.25rem;
+    font-size: 0.875rem;
+  }
+}
+
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+
+    .user-name  { font-weight: 500; color: var(--text); }
+    .user-email { font-size: 0.75rem; color: var(--text-muted); }
+  }
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+
+  &.owner  { background: rgba(99,102,241,0.15); color: #818cf8; }
+  &.admin  { background: rgba(234,179,8,0.15);  color: #eab308; }
+  &.member { background: rgba(148,163,184,0.1); color: var(--text-muted); }
+}
+
+.role-select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  color: var(--text);
+  padding: 0.3rem 0.6rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  outline: none;
+  &:focus { border-color: var(--primary); }
+}
+
+.date-cell { color: var(--text-muted); }
+
+.btn-remove {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 0.3rem 0.75rem;
+  border-radius: 0.4rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  &:hover { border-color: var(--danger); color: var(--danger); }
+}
+
+.danger-zone {
+  background: var(--surface);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 1rem;
+  padding: 1.5rem;
+
+  h3 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--danger);
+    margin-bottom: 1rem;
+  }
+}
+
+.btn-danger {
+  background: transparent;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  &:hover { background: rgba(239, 68, 68, 0.1); }
+}
+
+.state-message {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 2rem;
+  font-size: 0.875rem;
+}

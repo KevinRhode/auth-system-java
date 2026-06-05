@@ -11,6 +11,8 @@ export interface UserDto {
   name: string;
   email: string;
   role: string;
+  emailVerified: boolean;
+  createdAt: string;
 }
 
 @Injectable({ providedIn: 'root' })

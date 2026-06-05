@@ -22,6 +22,11 @@ public class JwtService {
     @Value("${jwt.refresh-expiration}")
     private long refreshExpiration;
 
+    public String extractRole(String token) {
+        return parseClaims(token, jwtSecret)
+            .get("role", String.class);
+    }
+
     private SecretKey getSigningKey(String secret) {
         return Keys.hmacShaKeyFor(secret.getBytes());
     }

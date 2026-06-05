@@ -15,6 +15,10 @@ import { AuthService } from '../../core/services/auth.service';
 
       <div class="nav-links">
         <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
+        @if (isAdmin()) {
+          <a routerLink="/admin/users" routerLinkActive="active">Users</a>
+          <a routerLink="/company" routerLinkActive="active">Company</a>
+        }
       </div>
 
        <div class="nav-actions">
@@ -80,6 +84,7 @@ export class NavComponent {
   dropdownOpen = signal(false);
 
   // computed signals — automatically update when currentUser changes
+  isAdmin = computed(() => this.authService.currentUser()?.role === 'ADMIN');
   name    = computed(() => this.authService.currentUser()?.name  ?? '');
   email   = computed(() => this.authService.currentUser()?.email ?? '');
   initial = computed(() => {
