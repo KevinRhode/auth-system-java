@@ -134,7 +134,8 @@ public class AuthService {
         // only rotate refresh token if less than 1 day remaining
         boolean shouldRotate = session.getExpiresAt()
             .isBefore(LocalDateTime.now().plusDays(1));
-        
+
+        String newAccessToken;
         String returnedRefreshToken = refreshToken;
         String returnedSessionId = session.getId();
                         
@@ -153,11 +154,11 @@ public class AuthService {
 
             sessionRepository.save(newSession);
             
-            String newAccessToken = jwtService.generateAccessToken(
-            user.getId(), user.getRole().name(), session.getId());
-
+            newAccessToken = jwtService.generateAccessToken(user.getId(), user.getRole().name(), session.getId());
             returnedRefreshToken = newRefreshToken;
             returnedSessionId = newSession.getId();
+        } else {
+            newAccessToken = jwtService.generateAccessToken(user.getId(), user.getRole().name(), session.getId());
         }
 
         return AuthResponse.builder()

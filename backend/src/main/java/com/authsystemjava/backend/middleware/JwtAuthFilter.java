@@ -1,6 +1,7 @@
 package com.authsystemjava.backend.middleware;
 
 import com.authsystemjava.backend.service.JwtService;
+import com.authsystemjava.backend.repository.SessionRepository;
 import com.authsystemjava.backend.util.CookieUtil;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
