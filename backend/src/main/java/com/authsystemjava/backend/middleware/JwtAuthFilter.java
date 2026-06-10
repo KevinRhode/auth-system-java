@@ -21,6 +21,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final CookieUtil cookieUtil;
+    private final SessionRepository sessionRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -32,15 +33,22 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         if (token != null) {
             if (jwtService.isTokenExpired(token)) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-                response.getWriter().write("{\"error\":\"TOKEN_EXPIRED\"}");
+                writeUnauthorized(response, "TOKEN_EXPIRED");
                 return;
             }
 
             if (jwtService.isTokenValid(token)) {
+                String sessionId = jwtService.extractSessionId(token);
+
+                // session revoked? reject immediately
+                if (sessionId == null || !sessionRepository.existsById(sessionId)) {
+                    writeUnauthorized(response, "SESSION_REVOKED");
+                    return;
+                }
+
                 String userId = jwtService.extractUserId(token);
                 String role = jwtService.extractRole(token);
+
                 var auth = new UsernamePasswordAuthenticationToken(
                         userId, null,
                         List.of(new SimpleGrantedAuthority("ROLE_" + role))
@@ -50,5 +58,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         chain.doFilter(request, response);
+    }
+
+    private void writeUnauthorized(HttpServletResponse response, String error)
+            throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.getWriter().write("{\"error\":\"" + error + "\"}");
     }
 }

@@ -31,10 +31,11 @@ public class JwtService {
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    public String generateAccessToken(String userId, String role) {
+    public String generateAccessToken(String userId, String role, String sessionId) {
         return Jwts.builder()
                 .subject(userId)
                 .claim("role", role)
+                .claim("sessionId", sessionId)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .signWith(getSigningKey(jwtSecret))
@@ -48,6 +49,10 @@ public class JwtService {
                 .expiration(new Date(System.currentTimeMillis() + refreshExpiration))
                 .signWith(getSigningKey(refreshSecret))
                 .compact();
+    }
+
+    public String extractSessionId(String token) {
+        return parseClaims(token, jwtSecret).get("sessionId", String.class);
     }
 
     public String extractUserId(String token) {

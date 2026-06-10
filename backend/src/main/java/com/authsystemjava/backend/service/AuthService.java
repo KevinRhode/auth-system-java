@@ -134,11 +134,10 @@ public class AuthService {
         // only rotate refresh token if less than 1 day remaining
         boolean shouldRotate = session.getExpiresAt()
             .isBefore(LocalDateTime.now().plusDays(1));
-
-        String newAccessToken = jwtService.generateAccessToken(
-            user.getId(), user.getRole().name());
+        
         String returnedRefreshToken = refreshToken;
-
+        String returnedSessionId = session.getId();
+                        
         if (shouldRotate) {
             log.info("Rotating refresh token for user: {}", user.getEmail());
             String newRefreshToken = jwtService.generateRefreshToken(user.getId());
@@ -153,12 +152,18 @@ public class AuthService {
                 .build();
 
             sessionRepository.save(newSession);
+            
+            String newAccessToken = jwtService.generateAccessToken(
+            user.getId(), user.getRole().name(), session.getId());
+
             returnedRefreshToken = newRefreshToken;
+            returnedSessionId = newSession.getId();
         }
 
         return AuthResponse.builder()
             .accessToken(newAccessToken)
             .refreshToken(returnedRefreshToken)
+            .sessionId(returnedSessionId)
             .user(UserDto.from(user))
             .build();
     }
@@ -169,8 +174,7 @@ public class AuthService {
                 .ifPresent(sessionRepository::delete);
     }
 
-    private AuthResponse generateAuthResponse(User user, String userAgent) {
-        String accessToken = jwtService.generateAccessToken(user.getId(), user.getRole().name());
+    private AuthResponse generateAuthResponse(User user, String userAgent) {        
         String refreshToken = jwtService.generateRefreshToken(user.getId());
 
         Session session = Session.builder()
@@ -182,9 +186,12 @@ public class AuthService {
 
         sessionRepository.save(session);
 
+        String accessToken = jwtService.generateAccessToken(user.getId(), user.getRole().name(), session.getId());
+
         return AuthResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
+                .sessionId(session.getId())
                 .user(UserDto.from(user))
                 .build();
     }
