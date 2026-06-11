@@ -77,6 +77,26 @@
       color: var(--text-muted);
     }
   }
+  &.current-session {
+    border-color: var(--primary);
+    background: rgba(99, 102, 241, 0.05);
+  }
+
+  .session-agent-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .current-badge {
+    display: inline-block;
+    padding: 0.1rem 0.5rem;
+    background: rgba(99, 102, 241, 0.15);
+    color: var(--primary);
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
 }
 
 .btn-revoke {

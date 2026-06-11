@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
@@ -27,10 +27,11 @@ import { environment } from '../../../environments/environment';
   `
 })
 export class VerifyEmailSentComponent implements OnInit {
+  serverError = signal('');
   email = '';
   resent = false;
 
-  constructor(private route: ActivatedRoute, private http: HttpClient) {}
+  constructor(private route: ActivatedRoute, private http: HttpClient) { }
 
   ngOnInit() {
     this.email = this.route.snapshot.queryParamMap.get('email') || '';
@@ -42,7 +43,17 @@ export class VerifyEmailSentComponent implements OnInit {
       { withCredentials: true }
     ).subscribe({
       next: () => this.resent = true,
-      error: () => this.resent = true
+      error: err => {
+        const errorMsg = err.error?.error || '';
+
+        if (err.status === 429 || errorMsg === 'RATE_LIMITED') {
+          this.serverError.set('Too many attempts. Please wait a minute and try again.');
+        } else if (errorMsg === 'Invalid credentials') {
+          this.serverError.set('Invalid email or password');
+        } else {
+          this.serverError.set('Something went wrong. Please try again.');
+        }
+      }
     });
   }
 }

@@ -15,10 +15,17 @@ export interface UserDto {
   createdAt: string;
 }
 
+interface AuthResponse {
+  sessionId: string;
+  user: UserDto;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private api = `${environment.apiUrl}/api/auth`;
+
   currentUser = signal<UserDto | null>(null);
+  currentSessionId = signal<string | null>(null);
 
   constructor(
     private http: HttpClient,
@@ -27,23 +34,25 @@ export class AuthService {
   ) {}
 
   register(data: { name: string; email: string; password: string }) {
-    return this.http.post<UserDto>(`${this.api}/register`, data, {
+    return this.http.post<AuthResponse>(`${this.api}/register`, data, {
       withCredentials: true
     }).pipe(
-      tap((user) => {
+      tap((res) => {
         this.tokenService.setAuthenticated();
-        this.currentUser.set(user);
+        this.currentSessionId.set(res.sessionId);
+        this.currentUser.set(res.user);
       })
     );
   }
 
   login(data: { email: string; password: string }) {
-    return this.http.post<UserDto>(`${this.api}/login`, data, {
+    return this.http.post<AuthResponse>(`${this.api}/login`, data, {
       withCredentials: true
     }).pipe(
-      tap((user) => {
+      tap((res) => {
         this.tokenService.setAuthenticated();
-        this.currentUser.set(user);
+        this.currentSessionId.set(res.sessionId);
+        this.currentUser.set(res.user);
       })
     );
   }
@@ -55,16 +64,20 @@ export class AuthService {
       tap(() => {
         this.tokenService.clearAuthenticated();
         this.currentUser.set(null);
+        this.currentSessionId.set(null);
         this.router.navigate(['/login']);
       })
     );
   }
 
   refresh() {
-    return this.http.post<UserDto>(`${this.api}/refresh`, {}, {
+    return this.http.post<AuthResponse>(`${this.api}/refresh`, {}, {
       withCredentials: true
     }).pipe(
-      tap(user => this.currentUser.set(user))
+      tap(res => {
+        this.currentSessionId.set(res.sessionId);
+        this.currentUser.set(res.user);
+      })
     );;
   }
 }

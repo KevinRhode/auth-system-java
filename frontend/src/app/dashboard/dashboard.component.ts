@@ -1,7 +1,8 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { SessionService, SessionDto } from '../core/services/session.service';
 import { AuthService } from '../core/services/auth.service';
+
 
 @Component({
   selector: 'app-dashboard',
@@ -31,36 +32,45 @@ import { AuthService } from '../core/services/auth.service';
         } @else if (sessions().length === 0) {
           <div class="state-message">No active sessions found.</div>
         } @else {
+          
           <ul class="session-list">
             @for (session of sessions(); track session.id) {
-              <li class="session-item">
+              <li class="session-item"
+              [class.current-session]="session.id === currentSessionId()">
                 <div class="session-info">
-                  <span class="session-agent">{{ parseAgent(session.userAgent) }}</span>
+                  <div class="session-agent-row">
+                    <span class="session-agent">{{ parseAgent(session.userAgent) }}</span>
+                    @if (session.id === currentSessionId()) {
+                      <span class="current-badge">Current</span>
+                    }
+                  </div>
                   <span class="session-meta">
                     Started {{ session.createdAt | date: 'MMM d, y, h:mm a' }} ·
                     Expires {{ session.expiresAt | date: 'MMM d, y' }}
                   </span>
                 </div>
-                <button class="btn-revoke" (click)="revoke(session.id)">
-                  Revoke
-                </button>
+                @if (session.id !== currentSessionId()) {
+                  <button class="btn-revoke" (click)="revoke(session.id)">
+                    Revoke
+                  </button>
+                }
               </li>
             }
-          </ul>
+          </ul>          
         }
       </div>
     </div>
   `
 })
 export class DashboardComponent implements OnInit {
+  private sessionService = inject(SessionService);
+  authService = inject(AuthService);
+
+  currentSessionId = computed(() => this.authService.currentSessionId());
   sessions = signal<SessionDto[]>([]);
-  loading = signal(true);
-
-  constructor(
-    private sessionService: SessionService,
-    private authService: AuthService
-  ) {}
-
+  loading = signal(true);  
+  
+  
   ngOnInit() {
     this.loadSessions();
   }
@@ -93,10 +103,10 @@ export class DashboardComponent implements OnInit {
 
   parseAgent(userAgent: string): string {
     if (!userAgent) return '🖥️ Unknown device';
-    if (userAgent.includes('Edg'))     return 'Edge';
-    if (userAgent.includes('Chrome'))  return 'Chrome';
+    if (userAgent.includes('Edg')) return 'Edge';
+    if (userAgent.includes('Chrome')) return 'Chrome';
     if (userAgent.includes('Firefox')) return 'Firefox';
-    if (userAgent.includes('Safari'))  return 'Safari';
+    if (userAgent.includes('Safari')) return 'Safari';
     return '🖥️ Unknown browser';
   }
 }

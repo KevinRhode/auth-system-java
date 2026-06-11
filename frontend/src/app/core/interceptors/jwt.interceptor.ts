@@ -22,9 +22,16 @@ export const jwtInterceptor: HttpInterceptorFn = (
   return next(reqWithCredentials).pipe(
     catchError((error: HttpErrorResponse): Observable<HttpEvent<unknown>> => {
       const isExpired = error.status === 401 && error.error?.error === 'TOKEN_EXPIRED';
+      const isRevoked = error.status === 401 && error.error?.error === 'SESSION_REVOKED';
       const isRefreshCall = req.url.includes('/api/auth/refresh');
       const isAuthCall = req.url.includes('/api/auth/login') ||
                          req.url.includes('/api/auth/register');
+
+      if (isRevoked) {
+        tokenService.clearAuthenticated();
+        router.navigate(['/login'], { queryParams: { revoked: 'true' } });
+        return throwError(() => error);
+      }
 
       if (!isExpired || isRefreshCall || isAuthCall) {
         if (error.status === 401) {

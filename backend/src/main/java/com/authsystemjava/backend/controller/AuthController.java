@@ -26,29 +26,29 @@ public class AuthController {
     private String frontendUrl;
 
     @PostMapping("/register")
-    public ResponseEntity<UserDto> register(
+    public ResponseEntity<AuthResponse> register(
             @Valid @RequestBody RegisterRequest request,
             HttpServletRequest httpRequest,
             HttpServletResponse response) {
         String userAgent = httpRequest.getHeader("User-Agent");
         AuthResponse auth = authService.register(request, userAgent);
         cookieUtil.setCookies(response, auth.getAccessToken(), auth.getRefreshToken());
-        return ResponseEntity.ok(auth.getUser());
+        return ResponseEntity.ok(auth);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<UserDto> login(
+    public ResponseEntity<AuthResponse> login(
             @Valid @RequestBody LoginRequest request,
             HttpServletRequest httpRequest,
             HttpServletResponse response) {
         String userAgent = httpRequest.getHeader("User-Agent");
         AuthResponse auth = authService.login(request, userAgent);
         cookieUtil.setCookies(response, auth.getAccessToken(), auth.getRefreshToken());
-        return ResponseEntity.ok(auth.getUser());
+        return ResponseEntity.ok(auth);
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<UserDto> refresh(
+    public ResponseEntity<AuthResponse> refresh(
             HttpServletRequest httpRequest,
             HttpServletResponse response) {
         String refreshToken = cookieUtil.getCookieValue(httpRequest, "refresh_token");
@@ -57,7 +57,7 @@ public class AuthController {
         }
         AuthResponse auth = authService.refresh(refreshToken);
         cookieUtil.setCookies(response, auth.getAccessToken(), auth.getRefreshToken());
-        return ResponseEntity.ok(auth.getUser());
+        return ResponseEntity.ok(auth);
     }
 
     @PostMapping("/logout")

@@ -112,18 +112,18 @@ export class RegisterComponent {
 
   getError(field: string): string {
     const control = this.form.get(field);
-    if (control?.errors?.['required'])        return 'This field is required';
-    if (control?.errors?.['email'])           return 'Enter a valid email address';
-    if (control?.errors?.['minlength'])       return `Minimum ${control.errors['minlength'].requiredLength} characters`;
-    if (control?.errors?.['maxlength'])       return `Maximum ${control.errors['maxlength'].requiredLength} characters`;
+    if (control?.errors?.['required']) return 'This field is required';
+    if (control?.errors?.['email']) return 'Enter a valid email address';
+    if (control?.errors?.['minlength']) return `Minimum ${control.errors['minlength'].requiredLength} characters`;
+    if (control?.errors?.['maxlength']) return `Maximum ${control.errors['maxlength'].requiredLength} characters`;
     if (control?.errors?.['passwordStrength']) return 'Must contain uppercase, lowercase and a number';
-    if (control?.errors?.['server'])          return control.errors['server'];
+    if (control?.errors?.['server']) return control.errors['server'];
     return '';
   }
 
   hasLength() { return (this.form.get('password')?.value?.length || 0) >= 12; }
-  hasUpper()  { return /[A-Z]/.test(this.form.get('password')?.value || ''); }
-  hasLower()  { return /[a-z]/.test(this.form.get('password')?.value || ''); }
+  hasUpper() { return /[A-Z]/.test(this.form.get('password')?.value || ''); }
+  hasLower() { return /[a-z]/.test(this.form.get('password')?.value || ''); }
   hasNumber() { return /\d/.test(this.form.get('password')?.value || ''); }
 
   onSubmit() {
@@ -140,11 +140,15 @@ export class RegisterComponent {
         { queryParams: { email: this.form.get('email')?.value } }),
       error: err => {
         const errorMsg = err.error?.error || '';
-        if (errorMsg === 'VALIDATION_FAILED') {
-          this.applyServerErrors(err.error.fields);
+
+        if (err.status === 429 || errorMsg === 'RATE_LIMITED') {
+          this.serverError.set('Too many attempts. Please wait a minute and try again.');
+        } else if (errorMsg === 'Invalid credentials') {
+          this.serverError.set('Invalid email or password');
         } else {
-          this.serverError.set(err.error?.error || 'Registration failed');
+          this.serverError.set('Something went wrong. Please try again.');
         }
+
         this.loading.set(false);
       }
     });
