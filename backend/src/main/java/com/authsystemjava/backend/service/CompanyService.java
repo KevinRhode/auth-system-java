@@ -1,6 +1,8 @@
 package com.authsystemjava.backend.service;
 
 import com.authsystemjava.backend.dto.*;
+import com.authsystemjava.backend.exception.ApiException;
+import com.authsystemjava.backend.exception.ErrorCode;
 import com.authsystemjava.backend.model.*;
 import com.authsystemjava.backend.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +27,7 @@ public class CompanyService {
     public CompanyDto createCompany(CreateCompanyRequest request, String userId) {
         // check user isn't already in a company
         if (companyMemberRepository.findByUserId(userId).isPresent()) {
-            throw new RuntimeException("You already belong to a company");
+            throw new ApiException(ErrorCode.ALREADY_IN_COMPANY);
         }
 
         String slug = generateSlug(request.getName());
@@ -38,7 +40,7 @@ public class CompanyService {
         companyRepository.save(company);
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
 
         CompanyMember owner = CompanyMember.builder()
                 .company(company)
@@ -55,7 +57,7 @@ public class CompanyService {
     @Transactional(readOnly = true)
     public CompanyDto getMyCompany(String userId) {
         CompanyMember membership = companyMemberRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("You don't belong to a company"));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_A_MEMBER));
 
         Company company = membership.getCompany();
         List<CompanyMemberDto> members = companyMemberRepository
@@ -74,15 +76,15 @@ public class CompanyService {
         validateRole(companyId, requesterId, CompanyRole.ADMIN);
 
         User invitedUser = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("No user found with that email"));
+                .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
 
         if (companyMemberRepository.existsByCompanyIdAndUserId(
                 companyId, invitedUser.getId())) {
-            throw new RuntimeException("User is already a member");
+            throw new ApiException(ErrorCode.ALREADY_IN_COMPANY);
         }
 
         Company company = companyRepository.findById(companyId)
-                .orElseThrow(() -> new RuntimeException("Company not found"));
+                .orElseThrow(() -> new ApiException(ErrorCode.COMPANY_NOT_FOUND));
 
         CompanyRole role;
         try {
@@ -110,11 +112,11 @@ public class CompanyService {
                                               String requesterId) {
         validateRole(companyId, requesterId, CompanyRole.ADMIN);
 
-        CompanyMember member = companyMemberRepository.findById(memberId)
-                .orElseThrow(() -> new RuntimeException("Member not found"));
+        CompanyMember member = companyMemberRepository.findByIdAndCompanyId(memberId, companyId)
+                .orElseThrow(() -> new ApiException(ErrorCode.MEMBER_NOT_FOUND));
 
         if (member.getRole() == CompanyRole.OWNER) {
-            throw new RuntimeException("Cannot change the owner's role");
+            throw new ApiException(ErrorCode.CANNOT_MODIFY_OWNER);
         }
 
         member.setRole(request.getRole());
@@ -127,11 +129,11 @@ public class CompanyService {
     public void removeMember(String companyId, String memberId, String requesterId) {
         validateRole(companyId, requesterId, CompanyRole.ADMIN);
 
-        CompanyMember member = companyMemberRepository.findById(memberId)
-                .orElseThrow(() -> new RuntimeException("Member not found"));
+        CompanyMember member = companyMemberRepository.findByIdAndCompanyId(memberId, companyId)
+                .orElseThrow(() -> new ApiException(ErrorCode.MEMBER_NOT_FOUND));
 
         if (member.getRole() == CompanyRole.OWNER) {
-            throw new RuntimeException("Cannot remove the owner");
+            throw new ApiException(ErrorCode.CANNOT_MODIFY_OWNER);
         }
 
         companyMemberRepository.delete(member);
@@ -141,10 +143,10 @@ public class CompanyService {
     @Transactional
     public void leaveCompany(String userId) {
         CompanyMember member = companyMemberRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("You don't belong to a company"));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_A_MEMBER));
 
         if (member.getRole() == CompanyRole.OWNER) {
-            throw new RuntimeException("Owner cannot leave — transfer ownership first");
+            throw new ApiException(ErrorCode.CANNOT_MODIFY_OWNER);
         }
 
         companyMemberRepository.delete(member);
@@ -155,7 +157,7 @@ public class CompanyService {
     private void validateRole(String companyId, String userId, CompanyRole minimumRole) {
         CompanyMember requester = companyMemberRepository
                 .findByCompanyIdAndUserId(companyId, userId)
-                .orElseThrow(() -> new RuntimeException("You are not a member of this company"));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_A_MEMBER));
 
         boolean hasPermission = switch (minimumRole) {
             case OWNER -> requester.getRole() == CompanyRole.OWNER;
@@ -165,7 +167,7 @@ public class CompanyService {
         };
 
         if (!hasPermission) {
-            throw new RuntimeException("Insufficient permissions");
+            throw new ApiException(ErrorCode.INSUFFICIENT_PERMISSIONS);
         }
     }
 

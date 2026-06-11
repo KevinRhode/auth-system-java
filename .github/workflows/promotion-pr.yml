@@ -1,0 +1,24 @@
+name: Open promotion PR
+
+on:
+  push:
+    branches: [dev]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  open-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create PR if none exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr create --repo ${{ github.repository }} \
+            --base main --head dev \
+            --title "Promote dev to main" \
+            --body "Auto-opened on push to dev. Review the dev deployment, then merge to deploy to production." \
+            && echo "PR opened" \
+            || echo "PR already exists — new commits were added to it automatically"

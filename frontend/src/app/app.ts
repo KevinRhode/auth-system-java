@@ -1,15 +1,16 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { AuthService } from './core/services/auth.service';
+import { NavComponent } from './shared/nav/nav.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, NavComponent],
   templateUrl: './app.html',
-  styleUrl: './app.scss'
+  styleUrl: './app.scss',
 })
 export class App implements OnInit {
-  constructor(private authService: AuthService) {}
+  constructor(protected authService: AuthService) {}
 
   ngOnInit() {
     // rehydrate user on every page load
@@ -18,9 +19,8 @@ export class App implements OnInit {
         error: () => {
           // refresh token expired or invalid — clear and go to login
           this.authService.tokenService.clearAuthenticated();
-        }
+        },
       });
     }
   }
-  
 }

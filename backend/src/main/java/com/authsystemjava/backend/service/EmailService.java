@@ -23,6 +23,40 @@ public class EmailService {
     @Value("${app.email.from}")
     private String fromEmail;
 
+    public  void sendAccountExistsEmail(String toEmail, String name){
+        String html = """
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2>Account already exists</h2>
+              <p>Hi %s,</p>
+              <p>We received a registration request for this email, but an account already exists.</p>
+              <p>If you forgot your password, you can reset it using the link below:</p>
+              <a href="%s/reset-password"
+                 style="display:inline-block; padding:12px 24px; background:#6366f1;
+                        color:#fff; text-decoration:none; border-radius:6px; margin:16px 0;">
+                Reset Password
+              </a>
+              <p>If you didn't request this, you can safely ignore this email.</p>
+            </div>
+        """.formatted(name, baseUrl);
+
+        try {
+            Resend resend = new Resend(resendApiKey);
+
+            CreateEmailOptions params = CreateEmailOptions.builder()
+                    .from(fromEmail)
+                    .to(toEmail)
+                    .subject("Account already exists — AuthSystem")
+                    .html(html)
+                    .build();
+
+            CreateEmailResponse response = resend.emails().send(params);
+            log.info("Account exists email sent to: {} id: {}", toEmail, response.getId());
+
+        } catch (ResendException e) {
+            log.error("Failed to send account exists email to {}: {}", toEmail, e.getMessage());
+        }
+    }
+
     public void sendVerificationEmail(String toEmail, String name, String token) {
         String link = baseUrl + "/verify-email?token=" + token;
 

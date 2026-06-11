@@ -143,12 +143,9 @@ export class RegisterComponent {
 
         if (err.status === 429 || errorMsg === 'RATE_LIMITED') {
           this.serverError.set('Too many attempts. Please wait a minute and try again.');
-        } else if (errorMsg === 'Invalid credentials') {
-          this.serverError.set('Invalid email or password');
         } else {
           this.serverError.set('Something went wrong. Please try again.');
         }
-
         this.loading.set(false);
       }
     });

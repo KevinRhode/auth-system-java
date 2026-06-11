@@ -11,6 +11,7 @@ public interface CompanyMemberRepository extends JpaRepository<CompanyMember, St
     List<CompanyMember> findAllByCompanyId(String companyId);
     Optional<CompanyMember> findByCompanyIdAndUserId(String companyId, String userId);
     Optional<CompanyMember> findByUserId(String userId);
+    Optional<CompanyMember> findByIdAndCompanyId(String id, String companyId);
     boolean existsByCompanyIdAndUserId(String companyId, String userId);
 
     @Transactional
