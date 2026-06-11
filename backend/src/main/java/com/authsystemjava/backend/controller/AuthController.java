@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,18 +23,10 @@ public class AuthController {
     private final AuthService authService;
     private final CookieUtil cookieUtil;
 
-    @Value("${app.base-url}")
-    private String frontendUrl;
-
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(
-            @Valid @RequestBody RegisterRequest request,
-            HttpServletRequest httpRequest,
-            HttpServletResponse response) {
-        String userAgent = httpRequest.getHeader("User-Agent");
-        AuthResponse auth = authService.register(request, userAgent);
-        cookieUtil.setCookies(response, auth.getAccessToken(), auth.getRefreshToken());
-        return ResponseEntity.ok(auth);
+    public ResponseEntity<UserDto> register(@Valid @RequestBody RegisterRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(authService.register(request));
     }
 
     @PostMapping("/login")
