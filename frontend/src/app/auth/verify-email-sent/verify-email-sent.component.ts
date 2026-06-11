@@ -12,10 +12,7 @@ import { environment } from '../../../environments/environment';
     <div class="auth-card">
       <div class="icon">📧</div>
       <h2>Check your email</h2>
-      <p class="subtitle">
-        We sent a verification link to <strong>{{ email }}</strong>.
-        Click the link to activate your account.
-      </p>
+      <p class="subtitle">We've sent instructions to your email</p>
       <p class="note">Didn't get it? Check your spam folder or</p>
       <button class="btn btn-primary" (click)="resend()" [disabled]="resent">
         {{ resent ? 'Email sent!' : 'Resend verification email' }}
@@ -24,36 +21,42 @@ import { environment } from '../../../environments/environment';
         <a routerLink="/login">Back to login</a>
       </div>
     </div>
-  `
+  `,
 })
 export class VerifyEmailSentComponent implements OnInit {
   serverError = signal('');
   email = '';
   resent = false;
 
-  constructor(private route: ActivatedRoute, private http: HttpClient) { }
+  constructor(
+    private route: ActivatedRoute,
+    private http: HttpClient,
+  ) {}
 
   ngOnInit() {
     this.email = this.route.snapshot.queryParamMap.get('email') || '';
   }
 
   resend() {
-    this.http.post(`${environment.apiUrl}/api/auth/resend-verification`,
-      { email: this.email },
-      { withCredentials: true }
-    ).subscribe({
-      next: () => this.resent = true,
-      error: err => {
-        const errorMsg = err.error?.error || '';
+    this.http
+      .post(
+        `${environment.apiUrl}/api/auth/resend-verification`,
+        { email: this.email },
+        { withCredentials: true },
+      )
+      .subscribe({
+        next: () => (this.resent = true),
+        error: (err) => {
+          const errorMsg = err.error?.error || '';
 
-        if (err.status === 429 || errorMsg === 'RATE_LIMITED') {
-          this.serverError.set('Too many attempts. Please wait a minute and try again.');
-        } else if (errorMsg === 'Invalid credentials') {
-          this.serverError.set('Invalid email or password');
-        } else {
-          this.serverError.set('Something went wrong. Please try again.');
-        }
-      }
-    });
+          if (err.status === 429 || errorMsg === 'RATE_LIMITED') {
+            this.serverError.set('Too many attempts. Please wait a minute and try again.');
+          } else if (errorMsg === 'Invalid credentials') {
+            this.serverError.set('Invalid email or password');
+          } else {
+            this.serverError.set('Something went wrong. Please try again.');
+          }
+        },
+      });
   }
 }

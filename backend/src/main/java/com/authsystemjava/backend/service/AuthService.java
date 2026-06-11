@@ -13,6 +13,8 @@ import java.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -30,11 +32,22 @@ public class AuthService {
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     @Transactional
-    public UserDto register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new ApiException(ErrorCode.INVALID_CREDENTIALS);
+    public void register(RegisterRequest request) {
+        if (!rateLimitService.tryConsumeRegisterEmail(request.getEmail())) {
+            throw new ApiException(ErrorCode.RATE_LIMITED);
+        }
+        Optional<User> existing = userRepository.findByEmail(request.getEmail());
+
+        if (existing.isPresent()) {
+            // Burn the same bcrypt cost as the real path (timing equalization)
+            passwordEncoder.encode(request.getPassword());
+
+            User user = existing.get();
+            emailService.sendAccountExistsEmail(user.getEmail(), user.getName());
+            return; // caller sees the exact same outcome
         }
 
+        // existing happy path: encode password, save user, create token, send verification email
         User user = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
@@ -55,7 +68,6 @@ public class AuthService {
         emailService.sendVerificationEmail(user.getEmail(), user.getName(), rawToken);
 
         log.info("User registered: {}", user.getEmail());
-        return UserDto.from(user);
     }
     
     @Transactional
@@ -78,7 +90,7 @@ public class AuthService {
     }
 
     @Transactional
-   public void resendVerification(String email) {
+    public void resendVerification(String email) {
     if (!rateLimitService.tryConsumeResend(email)) {
         throw new ApiException(ErrorCode.RATE_LIMITED);
     }
@@ -102,12 +114,18 @@ public class AuthService {
     // unknown email or already-verified: fall through, caller sees success
 }
 
-    public AuthResponse login(LoginRequest request, String userAgent) {        
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new ApiException(ErrorCode.INVALID_CREDENTIALS));
+    private static final String DUMMY_HASH = "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            log.warn("Login failed - wrong password: {}", request.getEmail());
+    public AuthResponse login(LoginRequest request, String userAgent) {
+
+
+        User user = userRepository.findByEmail(request.getEmail()).orElse(null);
+        boolean matches = passwordEncoder.matches(
+                request.getPassword(),
+                user != null ? user.getPassword() : DUMMY_HASH
+        );
+
+        if (user == null || !matches) {
             throw new ApiException(ErrorCode.INVALID_CREDENTIALS);
         }
 
@@ -206,6 +224,9 @@ public class AuthService {
 
     @Transactional
     public void resetPassword(String rawToken, String newPassword) {
+        if (!rateLimitService.tryConsumeResetPassword()) {
+            throw new ApiException(ErrorCode.RATE_LIMITED);
+        }
         Token token = tokenRepository
                 .findByTokenAndType(tokenHasher.sha256(rawToken), TokenType.PASSWORD_RESET)
                 .orElseThrow(() -> new ApiException(ErrorCode.INVALID_RESET_TOKEN));

@@ -23,11 +23,11 @@ public class RateLimitService {
                 .tryConsume(1);
     }
 
-    /** 5 registrations per hour per IP */
+    /** 3 registrations per hour per IP */
     public boolean tryConsumeRegister(String ip) {
         return resolve("register:" + ip,
-                Bandwidth.builder().capacity(5)
-                        .refillGreedy(5, Duration.ofHours(1)).build())
+                Bandwidth.builder().capacity(3)
+                        .refillGreedy(3, Duration.ofHours(1)).build())
                 .tryConsume(1);
     }
 
