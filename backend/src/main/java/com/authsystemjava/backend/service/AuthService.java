@@ -32,7 +32,7 @@ public class AuthService {
     @Transactional
     public UserDto register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new ApiException(ErrorCode.EMAIL_ALREADY_EXISTS);
+            throw new ApiException(ErrorCode.INVALID_CREDENTIALS);
         }
 
         User user = User.builder()
