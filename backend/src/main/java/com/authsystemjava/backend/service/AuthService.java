@@ -224,9 +224,6 @@ public class AuthService {
 
     @Transactional
     public void resetPassword(String rawToken, String newPassword) {
-        if (!rateLimitService.tryConsumeResetPassword()) {
-            throw new ApiException(ErrorCode.RATE_LIMITED);
-        }
         Token token = tokenRepository
                 .findByTokenAndType(tokenHasher.sha256(rawToken), TokenType.PASSWORD_RESET)
                 .orElseThrow(() -> new ApiException(ErrorCode.INVALID_RESET_TOKEN));

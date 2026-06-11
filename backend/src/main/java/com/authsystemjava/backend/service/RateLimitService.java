@@ -31,6 +31,14 @@ public class RateLimitService {
                 .tryConsume(1);
     }
 
+    /** 3 registration attempts per hour per email */
+    public boolean tryConsumeRegisterEmail(String email) {
+        return resolve("register-email:" + email.toLowerCase(),
+                Bandwidth.builder().capacity(3)
+                        .refillGreedy(3, Duration.ofHours(1)).build())
+                .tryConsume(1);
+    }
+
     /** 2 resends per hour per email */
     public boolean tryConsumeResend(String email) {
         return resolve("resend:" + email.toLowerCase(),
