@@ -124,10 +124,10 @@ export class LoginComponent implements OnInit {
       error: err => {
         const errorMsg = err.error?.error || '';
 
-        if (errorMsg === 'EMAIL_NOT_VERIFIED') {
+        if (err.status === 429 || errorMsg === 'RATE_LIMITED') {
+          this.serverError.set('Too many attempts. Please wait a minute and try again.');
+        } else if (errorMsg === 'EMAIL_NOT_VERIFIED') {
           this.unverified.set(true);
-        } else if (errorMsg === 'VALIDATION_FAILED') {
-          this.applyServerErrors(err.error.fields);
         } else if (errorMsg === 'Invalid credentials') {
           this.serverError.set('Invalid email or password');
         } else {
