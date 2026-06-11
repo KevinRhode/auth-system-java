@@ -39,6 +39,30 @@ public class RateLimitService {
                 .tryConsume(1);
     }
 
+    /** 2 password-reset emails per hour per email */
+    public boolean tryConsumeForgotPassword(String email) {
+        return resolve("forgot:" + email.toLowerCase(),
+                Bandwidth.builder().capacity(2)
+                        .refillGreedy(2, Duration.ofHours(1)).build())
+                .tryConsume(1);
+    }
+
+    /** 5 forgot-password requests per hour per IP */
+    public boolean tryConsumeForgotPasswordIp(String ip) {
+        return resolve("forgot-ip:" + ip,
+                Bandwidth.builder().capacity(5)
+                        .refillGreedy(5, Duration.ofHours(1)).build())
+                .tryConsume(1);
+    }
+
+    /** 5 reset attempts per hour per IP — slows token guessing */
+    public boolean tryConsumeResetPassword(String ip) {
+        return resolve("reset:" + ip,
+                Bandwidth.builder().capacity(5)
+                        .refillGreedy(5, Duration.ofHours(1)).build())
+                .tryConsume(1);
+    }
+
     private Bucket resolve(String key, Bandwidth limit) {
         return buckets.get(key, k -> Bucket.builder().addLimit(limit).build());
     }
