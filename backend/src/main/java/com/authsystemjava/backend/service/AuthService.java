@@ -32,7 +32,7 @@ public class AuthService {
     @Transactional
     public UserDto register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new ApiException(ErrorCode.EMAIL_ALREADY_EXISTS);
+            throw new ApiException(ErrorCode.INVALID_CREDENTIALS);
         }
 
         User user = User.builder()
@@ -173,6 +173,61 @@ public class AuthService {
     public void logout(String refreshToken) {
         sessionRepository.findByToken(tokenHasher.sha256(refreshToken))
                 .ifPresent(sessionRepository::delete);
+    }
+
+    @Transactional
+    public void forgotPassword(String email) {
+        if (!rateLimitService.tryConsumeForgotPassword(email)) {
+            // swallow rather than throw: a 429 here would confirm the email
+            // exists (rate limiting is per known-email key). The per-IP limit
+            // in RateLimitFilter still throttles abusive callers with a 429.
+            log.warn("Forgot-password rate limit hit for email: {}", email);
+            return;
+        }
+
+        userRepository.findByEmail(email).ifPresent(user -> {
+            // one active reset token per user — invalidate any previous one
+            tokenRepository.deleteByUserIdAndType(user.getId(), TokenType.PASSWORD_RESET);
+
+            String rawToken = UUID.randomUUID().toString();
+            Token resetToken = Token.builder()
+                    .user(user)
+                    .token(tokenHasher.sha256(rawToken))
+                    .type(TokenType.PASSWORD_RESET)
+                    .expiresAt(LocalDateTime.now().plusHours(1))
+                    .build();
+
+            tokenRepository.save(resetToken);
+            emailService.sendPasswordResetEmail(user.getEmail(), user.getName(), rawToken);
+            log.info("Password reset requested for: {}", user.getEmail());
+        });
+        // unknown email: fall through silently — caller always sees success
+    }
+
+    @Transactional
+    public void resetPassword(String rawToken, String newPassword) {
+        Token token = tokenRepository
+                .findByTokenAndType(tokenHasher.sha256(rawToken), TokenType.PASSWORD_RESET)
+                .orElseThrow(() -> new ApiException(ErrorCode.INVALID_RESET_TOKEN));
+
+        if (token.getExpiresAt().isBefore(LocalDateTime.now())) {
+            tokenRepository.delete(token);
+            throw new ApiException(ErrorCode.INVALID_RESET_TOKEN);
+        }
+
+        User user = token.getUser();
+        user.setPassword(passwordEncoder.encode(newPassword));
+
+        user.setEmailVerified(true);
+        userRepository.save(user);
+
+        // single-use: burn the token
+        tokenRepository.delete(token);
+
+        // revoke every session — if this reset was prompted by a compromise,
+        sessionRepository.deleteAllByUserId(user.getId());
+
+        log.info("Password reset completed for: {}", user.getEmail());
     }
 
     private AuthResponse generateAuthResponse(User user, String userAgent) {        

@@ -77,4 +77,21 @@ public class AuthController {
         authService.resendVerification(body.get("email"));
         return ResponseEntity.ok(Map.of("message", "Verification email sent"));
     }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Map<String, String>> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request) {
+        authService.forgotPassword(request.getEmail());
+        // identical response whether or not the account exists
+        return ResponseEntity.ok(Map.of(
+                "message", "If an account exists for that email, a reset link has been sent"));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Map<String, String>> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request.getToken(), request.getNewPassword());
+        return ResponseEntity.ok(Map.of(
+                "message", "Password updated. Please log in with your new password"));
+    }
 }
