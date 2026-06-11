@@ -1,5 +1,7 @@
-package com.authsystemjava.backend.config;
+package com.authsystemjava.backend.exception;
 
+import com.authsystemjava.backend.exception.ApiException;
+import com.authsystemjava.backend.exception.ErrorCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -31,19 +33,25 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException ex) {
-        log.error("RuntimeException: {}", ex.getMessage());
+    @ExceptionHandler(ApiException.class)
+    public ResponseEntity<Map<String, String>> handleApiException(ApiException ex) {
+        ErrorCode code = ex.getErrorCode();
         return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("error", ex.getMessage()));
+                .status(code.getStatus())
+                .body(Map.of(
+                        "error", code.name(),
+                        "message", code.getMessage()
+                ));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleException(Exception ex) {
-        log.error("Unhandled exception: {}", ex.getMessage(), ex);
+        log.error("Unhandled exception", ex);
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("error", "An unexpected error occurred"));
+                .body(Map.of(
+                        "error", "INTERNAL_ERROR",
+                        "message", "An unexpected error occurred"
+                ));
     }
 }

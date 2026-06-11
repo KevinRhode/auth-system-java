@@ -3,6 +3,8 @@ package com.authsystemjava.backend.service;
 import com.authsystemjava.backend.dto.*;
 import com.authsystemjava.backend.model.*;
 import com.authsystemjava.backend.repository.*;
+import com.authsystemjava.backend.exception.ApiException;
+import com.authsystemjava.backend.exception.ErrorCode;
 import com.authsystemjava.backend.util.TokenHasher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,7 +31,7 @@ public class AuthService {
 
     public AuthResponse register(RegisterRequest request, String userAgent) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already in use");
+            throw new ApiException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
         User user = User.builder()
@@ -64,11 +66,11 @@ public class AuthService {
     public void verifyEmail(String rawToken) {
         Token token = tokenRepository
                 .findByTokenAndType(tokenHasher.sha256(rawToken), TokenType.EMAIL_VERIFICATION)
-                .orElseThrow(() -> new RuntimeException("Invalid verification token"));
+                .orElseThrow(() -> new ApiException(ErrorCode.INVALID_VERIFICATION_TOKEN));
 
         if (token.getExpiresAt().isBefore(LocalDateTime.now())) {
             tokenRepository.delete(token);
-            throw new RuntimeException("Verification token expired");
+            throw new ApiException(ErrorCode.TOKEN_EXPIRED);
         }
 
         User user = token.getUser();
@@ -79,69 +81,42 @@ public class AuthService {
         log.info("Email verified for: {}", user.getEmail());
     }
 
-    // public void resendVerification(String email) {
-    //     if (!rateLimitService.tryConsumeResend(email)) {
-    //         throw new RuntimeException("RATE_LIMITED");
-    //     }
-
-    //     User user = userRepository.findByEmail(email)
-    //             .orElseThrow(() -> new RuntimeException("User not found"));
-
-    //     if (user.getEmailVerified()) {
-    //         throw new RuntimeException("Email already verified");
-    //     }
-
-    //     // delete any existing verification tokens
-    //     tokenRepository.deleteByUserIdAndType(user.getId(), TokenType.EMAIL_VERIFICATION);
-
-    //     String rawToken = UUID.randomUUID().toString();
-    //     Token verificationToken = Token.builder()
-    //             .user(user)
-    //             .token(rawToken)
-    //             .type(TokenType.EMAIL_VERIFICATION)
-    //             .expiresAt(LocalDateTime.now().plusHours(24))
-    //             .build();
-
-    //     tokenRepository.save(verificationToken);
-    //     emailService.sendVerificationEmail(user.getEmail(), user.getName(), rawToken);
-    //     log.info("Verification email resent to: {}", user.getEmail());
-    // }
-
-    public void resendVerification(String email) {
-        if (!rateLimitService.tryConsumeResend(email)) {
-            throw new RuntimeException("RATE_LIMITED");
-        }
-
-        userRepository.findByEmail(email).ifPresent(user -> {
-            if (user.getEmailVerified()) return;   // silently no-op
-
-            tokenRepository.deleteByUserIdAndType(user.getId(), TokenType.EMAIL_VERIFICATION);
-
-            String rawToken = UUID.randomUUID().toString();
-            Token verificationToken = Token.builder()
-                    .user(user)
-                    .token(tokenHasher.sha256(rawToken))
-                    .type(TokenType.EMAIL_VERIFICATION)
-                    .expiresAt(LocalDateTime.now().plusHours(24))
-                    .build();
-
-            tokenRepository.save(verificationToken);
-            emailService.sendVerificationEmail(user.getEmail(), user.getName(), rawToken);
-        });
-    // always returns success to the caller — no user enumeration
+    @Transactional
+   public void resendVerification(String email) {
+    if (!rateLimitService.tryConsumeResend(email)) {
+        throw new ApiException(ErrorCode.RATE_LIMITED);
     }
+
+    userRepository.findByEmail(email).ifPresent(user -> {
+        if (user.getEmailVerified()) return;   // silently no-op
+
+        tokenRepository.deleteByUserIdAndType(user.getId(), TokenType.EMAIL_VERIFICATION);
+
+        String rawToken = UUID.randomUUID().toString();
+        Token verificationToken = Token.builder()
+                .user(user)
+                .token(tokenHasher.sha256(rawToken))
+                .type(TokenType.EMAIL_VERIFICATION)
+                .expiresAt(LocalDateTime.now().plusHours(24))
+                .build();
+
+        tokenRepository.save(verificationToken);
+        emailService.sendVerificationEmail(user.getEmail(), user.getName(), rawToken);
+    });
+    // unknown email or already-verified: fall through, caller sees success
+}
 
     public AuthResponse login(LoginRequest request, String userAgent) {        
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Invalid credentials"));
+                .orElseThrow(() -> new ApiException(ErrorCode.INVALID_CREDENTIALS));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             log.warn("Login failed - email not found: {}", request.getEmail());
-            throw new RuntimeException("Invalid credentials");
+            throw new ApiException(ErrorCode.INVALID_CREDENTIALS);
         }
 
         if (!user.getEmailVerified()) {
-            throw new RuntimeException("EMAIL_NOT_VERIFIED");
+            throw new ApiException(ErrorCode.EMAIL_NOT_VERIFIED);
         }
 
         log.info("Login successful for: {}", request.getEmail());
@@ -150,12 +125,12 @@ public class AuthService {
 
     @Transactional
     public AuthResponse refresh(String refreshToken) {
-    Session session = sessionRepository.findByToken(refreshToken)
-            .orElseThrow(() -> new RuntimeException("Invalid refresh token"));
+    Session session = sessionRepository.findByToken(tokenHasher.sha256(refreshToken))
+            .orElseThrow(() -> new ApiException(ErrorCode.INVALID_REFRESH_TOKEN));
 
         if (session.getExpiresAt().isBefore(LocalDateTime.now())) {
             sessionRepository.delete(session);
-            throw new RuntimeException("Refresh token expired");
+            throw new ApiException(ErrorCode.TOKEN_EXPIRED);
         }
 
         User user = session.getUser();
@@ -183,7 +158,7 @@ public class AuthService {
 
             sessionRepository.save(newSession);
             
-            newAccessToken = jwtService.generateAccessToken(user.getId(), user.getRole().name(), session.getId());
+            newAccessToken = jwtService.generateAccessToken(user.getId(), user.getRole().name(), newSession.getId());
             returnedRefreshToken = newRefreshToken;
             returnedSessionId = newSession.getId();
         } else {
