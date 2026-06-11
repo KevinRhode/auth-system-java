@@ -17,18 +17,20 @@ import { AuthService } from '../../core/services/auth.service';
         <div class="alert alert-success">✅ Email verified — you can now log in.</div>
       }
 
+      @if (resetDone()) {
+        <div class="alert alert-success">✅ Password updated — log in with your new password.</div>
+      }
+
       @if (unverified()) {
         <div class="alert alert-warning">
           ⚠️ Please verify your email before logging in.
-          <a routerLink="/verify-email-sent"
-            [queryParams]="{ email: form.get('email')?.value }">
+          <a routerLink="/verify-email-sent" [queryParams]="{ email: form.get('email')?.value }">
             Resend link
           </a>
         </div>
       }
 
       <form [formGroup]="form" (ngSubmit)="onSubmit()">
-
         <div class="form-group">
           <label>Email</label>
           <input
@@ -53,6 +55,7 @@ import { AuthService } from '../../core/services/auth.service';
           @if (isInvalid('password')) {
             <span class="field-error">{{ getError('password') }}</span>
           }
+          <a class="forgot-link" routerLink="/forgot-password">Forgot password?</a>
         </div>
 
         @if (serverError()) {
@@ -62,14 +65,11 @@ import { AuthService } from '../../core/services/auth.service';
         <button class="btn btn-primary" type="submit" [disabled]="loading()">
           {{ loading() ? 'Signing in...' : 'Sign in' }}
         </button>
-
       </form>
 
-      <div class="form-footer">
-        Don't have an account? <a routerLink="/register">Register</a>
-      </div>
+      <div class="form-footer">Don't have an account? <a routerLink="/register">Register</a></div>
     </div>
-  `
+  `,
 })
 export class LoginComponent implements OnInit {
   form: FormGroup;
@@ -77,23 +77,23 @@ export class LoginComponent implements OnInit {
   loading = signal(false);
   verified = signal(false);
   unverified = signal(false);
+  resetDone = signal(false);
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
   ) {
     this.form = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
-      password: ['', Validators.required]
+      password: ['', Validators.required],
     });
   }
 
   ngOnInit() {
-    this.verified.set(
-      this.route.snapshot.queryParamMap.get('verified') === 'true'
-    );
+    this.verified.set(this.route.snapshot.queryParamMap.get('verified') === 'true');
+    this.resetDone.set(this.route.snapshot.queryParamMap.get('reset') === 'true');
   }
 
   isInvalid(field: string): boolean {
@@ -121,7 +121,7 @@ export class LoginComponent implements OnInit {
 
     this.authService.login(this.form.value).subscribe({
       next: () => this.router.navigate(['/dashboard']),
-      error: err => {
+      error: (err) => {
         const errorMsg = err.error?.error || '';
 
         if (err.status === 429 || errorMsg === 'RATE_LIMITED') {
@@ -135,7 +135,7 @@ export class LoginComponent implements OnInit {
         }
 
         this.loading.set(false);
-      }
+      },
     });
   }
 

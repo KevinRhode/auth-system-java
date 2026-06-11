@@ -218,8 +218,6 @@ public class AuthService {
         User user = token.getUser();
         user.setPassword(passwordEncoder.encode(newPassword));
 
-        // proving control of the inbox also proves the email — unblocks
-        // users who lost their verification link
         user.setEmailVerified(true);
         userRepository.save(user);
 
@@ -227,7 +225,6 @@ public class AuthService {
         tokenRepository.delete(token);
 
         // revoke every session — if this reset was prompted by a compromise,
-        // the attacker's refresh tokens die here
         sessionRepository.deleteAllByUserId(user.getId());
 
         log.info("Password reset completed for: {}", user.getEmail());
