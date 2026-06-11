@@ -3,6 +3,7 @@ package com.authsystemjava.backend.service;
 import com.authsystemjava.backend.dto.*;
 import com.authsystemjava.backend.model.*;
 import com.authsystemjava.backend.repository.*;
+import com.authsystemjava.backend.util.TokenHasher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,8 @@ public class AuthService {
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final TokenHasher tokenHasher;
+    private final RateLimitService rateLimitService;
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     public AuthResponse register(RegisterRequest request, String userAgent) {
@@ -39,10 +42,10 @@ public class AuthService {
         userRepository.save(user);
 
         // generate and save verification token
-        String rawToken = UUID.randomUUID().toString();
+        String rawToken = UUID.randomUUID().toString();        
         Token verificationToken = Token.builder()
                 .user(user)
-                .token(rawToken)
+                .token(tokenHasher.sha256(rawToken))
                 .type(TokenType.EMAIL_VERIFICATION)
                 .expiresAt(LocalDateTime.now().plusHours(24))
                 .build();
@@ -60,7 +63,7 @@ public class AuthService {
     @Transactional
     public void verifyEmail(String rawToken) {
         Token token = tokenRepository
-                .findByTokenAndType(rawToken, TokenType.EMAIL_VERIFICATION)
+                .findByTokenAndType(tokenHasher.sha256(rawToken), TokenType.EMAIL_VERIFICATION)
                 .orElseThrow(() -> new RuntimeException("Invalid verification token"));
 
         if (token.getExpiresAt().isBefore(LocalDateTime.now())) {
@@ -76,33 +79,59 @@ public class AuthService {
         log.info("Email verified for: {}", user.getEmail());
     }
 
-    public void resendVerification(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    // public void resendVerification(String email) {
+    //     if (!rateLimitService.tryConsumeResend(email)) {
+    //         throw new RuntimeException("RATE_LIMITED");
+    //     }
 
-        if (user.getEmailVerified()) {
-            throw new RuntimeException("Email already verified");
+    //     User user = userRepository.findByEmail(email)
+    //             .orElseThrow(() -> new RuntimeException("User not found"));
+
+    //     if (user.getEmailVerified()) {
+    //         throw new RuntimeException("Email already verified");
+    //     }
+
+    //     // delete any existing verification tokens
+    //     tokenRepository.deleteByUserIdAndType(user.getId(), TokenType.EMAIL_VERIFICATION);
+
+    //     String rawToken = UUID.randomUUID().toString();
+    //     Token verificationToken = Token.builder()
+    //             .user(user)
+    //             .token(rawToken)
+    //             .type(TokenType.EMAIL_VERIFICATION)
+    //             .expiresAt(LocalDateTime.now().plusHours(24))
+    //             .build();
+
+    //     tokenRepository.save(verificationToken);
+    //     emailService.sendVerificationEmail(user.getEmail(), user.getName(), rawToken);
+    //     log.info("Verification email resent to: {}", user.getEmail());
+    // }
+
+    public void resendVerification(String email) {
+        if (!rateLimitService.tryConsumeResend(email)) {
+            throw new RuntimeException("RATE_LIMITED");
         }
 
-        // delete any existing verification tokens
-        tokenRepository.deleteByUserIdAndType(user.getId(), TokenType.EMAIL_VERIFICATION);
+        userRepository.findByEmail(email).ifPresent(user -> {
+            if (user.getEmailVerified()) return;   // silently no-op
 
-        String rawToken = UUID.randomUUID().toString();
-        Token verificationToken = Token.builder()
-                .user(user)
-                .token(rawToken)
-                .type(TokenType.EMAIL_VERIFICATION)
-                .expiresAt(LocalDateTime.now().plusHours(24))
-                .build();
+            tokenRepository.deleteByUserIdAndType(user.getId(), TokenType.EMAIL_VERIFICATION);
 
-        tokenRepository.save(verificationToken);
-        emailService.sendVerificationEmail(user.getEmail(), user.getName(), rawToken);
-        log.info("Verification email resent to: {}", user.getEmail());
+            String rawToken = UUID.randomUUID().toString();
+            Token verificationToken = Token.builder()
+                    .user(user)
+                    .token(tokenHasher.sha256(rawToken))
+                    .type(TokenType.EMAIL_VERIFICATION)
+                    .expiresAt(LocalDateTime.now().plusHours(24))
+                    .build();
+
+            tokenRepository.save(verificationToken);
+            emailService.sendVerificationEmail(user.getEmail(), user.getName(), rawToken);
+        });
+    // always returns success to the caller — no user enumeration
     }
 
-    public AuthResponse login(LoginRequest request, String userAgent) {
-        log.debug("Login attempt for email: {}", request.getEmail());
-
+    public AuthResponse login(LoginRequest request, String userAgent) {        
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("Invalid credentials"));
 
@@ -147,7 +176,7 @@ public class AuthService {
 
             Session newSession = Session.builder()
                 .user(user)
-                .token(newRefreshToken)
+                .token(tokenHasher.sha256(newRefreshToken))
                 .userAgent(session.getUserAgent())
                 .expiresAt(LocalDateTime.now().plusDays(7))
                 .build();
@@ -171,7 +200,7 @@ public class AuthService {
 
     @Transactional
     public void logout(String refreshToken) {
-        sessionRepository.findByToken(refreshToken)
+        sessionRepository.findByToken(tokenHasher.sha256(refreshToken))
                 .ifPresent(sessionRepository::delete);
     }
 
@@ -180,7 +209,7 @@ public class AuthService {
 
         Session session = Session.builder()
                 .user(user)
-                .token(refreshToken)
+                .token(tokenHasher.sha256(refreshToken))
                 .userAgent(userAgent)
                 .expiresAt(LocalDateTime.now().plusDays(7))
                 .build();
