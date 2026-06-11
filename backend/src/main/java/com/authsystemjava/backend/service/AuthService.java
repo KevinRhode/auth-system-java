@@ -29,7 +29,8 @@ public class AuthService {
     private final RateLimitService rateLimitService;
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
-    public AuthResponse register(RegisterRequest request, String userAgent) {
+    @Transactional
+    public UserDto register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new ApiException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
@@ -40,26 +41,21 @@ public class AuthService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(Role.USER)
                 .build();
-
         userRepository.save(user);
 
-        // generate and save verification token
-        String rawToken = UUID.randomUUID().toString();        
+        String rawToken = UUID.randomUUID().toString();
         Token verificationToken = Token.builder()
                 .user(user)
                 .token(tokenHasher.sha256(rawToken))
                 .type(TokenType.EMAIL_VERIFICATION)
                 .expiresAt(LocalDateTime.now().plusHours(24))
                 .build();
-
         tokenRepository.save(verificationToken);
 
-        // send email
         emailService.sendVerificationEmail(user.getEmail(), user.getName(), rawToken);
 
         log.info("User registered: {}", user.getEmail());
-
-        return generateAuthResponse(user, userAgent);
+        return UserDto.from(user);
     }
     
     @Transactional
@@ -111,7 +107,7 @@ public class AuthService {
                 .orElseThrow(() -> new ApiException(ErrorCode.INVALID_CREDENTIALS));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            log.warn("Login failed - email not found: {}", request.getEmail());
+            log.warn("Login failed - wrong password: {}", request.getEmail());
             throw new ApiException(ErrorCode.INVALID_CREDENTIALS);
         }
 
