@@ -35,11 +35,14 @@ public class User {
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @ToString.Exclude
     private List<Session> sessions;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @ToString.Exclude
     private List<Token> tokens;
 
     @OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
+    @ToString.Exclude
     private CompanyMember companyMember;
 }

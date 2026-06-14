@@ -18,7 +18,8 @@ public enum ErrorCode {
     NOT_A_MEMBER("Not a Member",HttpStatus.FORBIDDEN),
     INSUFFICIENT_PERMISSIONS("Need Permissions", HttpStatus.FORBIDDEN),
     CANNOT_MODIFY_OWNER("Is Owner", HttpStatus.BAD_REQUEST),
-    INVALID_ROLE("Invalid Role", HttpStatus.BAD_REQUEST);
+    INVALID_ROLE("Invalid Role", HttpStatus.BAD_REQUEST),
+    USER_SETTINGS_NOT_FOUND("User settings not found", HttpStatus.NOT_FOUND);
 
 
     private final String message;
