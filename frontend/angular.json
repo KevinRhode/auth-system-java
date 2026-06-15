@@ -78,6 +78,9 @@
             "production": {
               "buildTarget": "frontend:build:production"
             },
+            "dev": {
+              "buildTarget": "frontend:build:dev"
+            },
             "development": {
               "buildTarget": "frontend:build:development"
             }
