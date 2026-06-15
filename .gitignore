@@ -1,1 +1,27 @@
+# ---- Secrets & environment (NEVER commit) ----
+.env
+.env.*
+!.env.example
+**/application-local.properties
+*.pem
+*.key
+*.p12
+
+# ---- Build output (modules also ignore these; this is a safety net) ----
+**/target/
+**/dist/
+**/node_modules/
+**/.angular/cache/
+
+# ---- Logs ----
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# ---- IDE / editor ----
 .idea/
+*.iml
+
+# ---- OS files ----
+.DS_Store
+Thumbs.db
