@@ -70,6 +70,14 @@ public class CompanyService {
     }
 
     @Transactional
+    public Company getMyCompaniesCompany(String userId) {
+        CompanyMember membership = companyMemberRepository.findByUserId(userId)
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_A_MEMBER));
+
+        return membership.getCompany();
+    }
+
+    @Transactional
     public CompanyMemberDto inviteMember(String companyId,
                                          InviteMemberRequest request,
                                          String requesterId) {

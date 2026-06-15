@@ -1,0 +1,80 @@
+:host {
+  .settings-layout {
+    display: flex;
+    gap: 2rem;
+    padding: 2rem;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .settings-nav {
+    width: 200px;
+    flex-shrink: 0;
+  }
+  .settings-nav h2 {
+    margin: 0 0 1rem;
+    font-size: 1.25rem;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    background: none;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: left;
+    font-size: 0.9rem;
+    color: var(--text, inherit);
+  }
+  .nav-item.active,
+  .nav-item:hover {
+    background: var(--surface-alt, #f3f4f6);
+  }
+  .settings-content {
+    flex: 1;
+  }
+  .settings-section h3 {
+    margin: 0 0 0.25rem;
+  }
+  .section-desc {
+    color: var(--text-muted, #666);
+    margin: 0 0 1.5rem;
+  }
+  .setting-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border, #e5e7eb);
+  }
+  .danger-zone {
+    margin-top: 2rem;
+    border: 1px solid var(--danger, #dc2626);
+    border-radius: 8px;
+    padding: 1rem;
+  }
+  .danger-zone h4 {
+    color: var(--danger, #dc2626);
+    margin: 0 0 1rem;
+  }
+  .danger-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+  }
+  .danger-row p {
+    margin: 0.25rem 0 0;
+    font-size: 0.875rem;
+    color: var(--text-muted, #666);
+  }
+  .empty-state {
+    color: var(--text-muted, #666);
+  }
+  .btn-danger {
+    background: var(--danger, #dc2626);
+    color: #fff;
+    white-space: nowrap;
+  }
+}

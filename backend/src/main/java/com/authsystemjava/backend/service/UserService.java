@@ -2,6 +2,8 @@ package com.authsystemjava.backend.service;
 
 import com.authsystemjava.backend.dto.UpdateRoleRequest;
 import com.authsystemjava.backend.dto.UserDto;
+import com.authsystemjava.backend.exception.ApiException;
+import com.authsystemjava.backend.exception.ErrorCode;
 import com.authsystemjava.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -26,7 +28,7 @@ public class UserService {
     public UserDto getUserById(String id) {
         return userRepository.findById(id)
                 .map(UserDto::from)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
     }
 
     public UserDto updateRole(String id, UpdateRoleRequest request) {
@@ -35,19 +37,19 @@ public class UserService {
             userRepository.save(user);
             log.info("Role updated for user: {} to {}", user.getEmail(), request.getRole());
             return UserDto.from(user);
-        }).orElseThrow(() -> new RuntimeException("User not found"));
+        }).orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
     }
 
     public void deleteUser(String id) {
         userRepository.findById(id).ifPresentOrElse(user -> {
             userRepository.delete(user);
             log.info("User deleted: {}", user.getEmail());
-        }, () -> { throw new RuntimeException("User not found"); });
+        }, () -> { throw new ApiException(ErrorCode.USER_NOT_FOUND); });
     }
 
     public UserDto getMe(String userId) {
         return userRepository.findById(userId)
                 .map(UserDto::from)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
     }
 }
