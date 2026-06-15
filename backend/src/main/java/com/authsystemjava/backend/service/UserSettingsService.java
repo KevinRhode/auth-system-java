@@ -23,6 +23,7 @@ public class UserSettingsService {
 
     private final UserRepository userRepository;
     private final UserSettingsRepository userSettingsRepository;
+    private final CompanyService companyService;
 
     @Transactional
     public UserSettingsDto getOrCreateSettings(String userId) {
@@ -37,6 +38,7 @@ public class UserSettingsService {
         UserSettings settings = UserSettings.builder()
                 .user(user)
                 .theme("light")
+                .company(companyService.getMyCompaniesCompany(userId))
                 .build();
 
         userSettingsRepository.save(settings);

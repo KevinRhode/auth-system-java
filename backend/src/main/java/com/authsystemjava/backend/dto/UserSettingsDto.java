@@ -17,7 +17,7 @@ public class UserSettingsDto {
     private String id;
     private String language;
     private String theme;
-    private User user;
+    private UserDto user;
     private CompanyDto company;
 
     public static UserSettingsDto from(UserSettings settings) {
@@ -25,7 +25,7 @@ public class UserSettingsDto {
                 .id(settings.getId())
                 .language(settings.getLanguage())
                 .theme(settings.getTheme())
-                .user(settings.getUser())
+                .user(settings.getUser() != null ? UserDto.from(settings.getUser()) : null)
                 .company(settings.getCompany() != null ? CompanyDto.from(settings.getCompany()) : null)
                 .build();
     }

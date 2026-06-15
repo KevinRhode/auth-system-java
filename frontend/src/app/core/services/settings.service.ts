@@ -5,17 +5,29 @@ import { CompanyDto, CompanyService } from './company.service';
 import { TokenService } from './token.service';
 import { Router } from '@angular/router';
 
-export interface SettingsDto {
+export interface UserDto {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  emailVerified: boolean;
+  createdAt: string;
+}
+
+export interface UserSettingsDto {
+  id: string;
+  language: string | null;
   theme: string;
-  emailNotifications: boolean;
-  companyId: string;
+  user: UserDto;
+  company: CompanyDto | null;
 }
 
 @Injectable({ providedIn: 'root' })
 export class SettingsService {
   theme = signal<string | null>(null);
-  emailNotifications = false;
-  companyId = signal<string | null>(null);
+  language = signal<string | null>(null);
+  user = signal<UserDto | null>(null);
+  company = signal<CompanyDto | null>(null);
 
   isDarkTheme = computed(() => this.theme() === 'dark');
 
@@ -24,14 +36,21 @@ export class SettingsService {
     private companyService: CompanyService,
   ) {
     // 2. Fetch data once on service initialization
-    this.fetchCompanyData();
+    this.fetchUserSettings();
   }
 
   // 3. Keep logic clean by isolating side-effects from getters
-  private fetchCompanyData(): void {
-    this.companyService.getMyCompany().subscribe({
-      next: (company: CompanyDto) => this.companyId.set(company.id),
-      error: (err) => console.error('Failed to load company ID', err),
-    });
+  private fetchUserSettings(): void {
+    this.http
+      .get<UserSettingsDto>(`${environment.apiUrl}/api/user/settings`, { withCredentials: true })
+      .subscribe({
+        next: (settings: UserSettingsDto) => {
+          this.theme.set(settings.theme);
+          this.language.set(settings.language);
+          this.user.set(settings.user);
+          this.company.set(settings.company);
+        },
+        error: (err) => console.error('Failed to load user settings', err),
+      });
   }
 }

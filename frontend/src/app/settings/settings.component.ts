@@ -4,12 +4,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../core/services/auth.service';
 import { ConfirmModalComponent } from '../shared/confirm-modal/confirm-modal.component';
 import { environment } from '../../environments/environment';
-
-interface UserSettings {
-  id: number;
-  theme: string | null;
-  companyId: number | null;
-}
+import { UserSettingsDto } from '../core/services/settings.service';
 
 interface SettingsSection {
   id: string;
@@ -59,8 +54,9 @@ interface SettingsSection {
 
             @if (inCompany()) {
               <div class="setting-row">
-                <span class="setting-label">Company ID</span>
-                <span class="setting-value">{{ settings()!.companyId }}</span>
+                <span class="setting-label">Company</span>
+                <span class="setting-value">{{ companyName() }}</span>
+                <!--                <span class="setting-value">{{ settings()!.companyId }}</span>-->
               </div>
               <div class="danger-zone">
                 <h4>Danger zone</h4>
@@ -87,7 +83,7 @@ interface SettingsSection {
       title="Leave company"
       [message]="
         'You will lose access to company #' +
-        settings()?.companyId +
+        companyName() +
         ' immediately. An admin must re-invite you to rejoin.'
       "
       confirmLabel="Leave company"
@@ -110,15 +106,15 @@ export class SettingsComponent implements OnInit {
   ];
 
   activeSection = signal<string>('account');
-  settings = signal<UserSettings | null>(null);
+  settings = signal<UserSettingsDto | null>(null);
   showLeaveModal = signal(false);
   leaving = signal(false);
-
-  inCompany = computed(() => this.settings()?.companyId != null);
+  companyName = computed(() => this.settings()?.company?.name ?? null);
+  inCompany = computed(() => this.settings()?.company?.id != null);
 
   ngOnInit(): void {
     this.http
-      .get<UserSettings>(`${environment.apiUrl}/api/user/settings`, { withCredentials: true })
+      .get<UserSettingsDto>(`${environment.apiUrl}/api/user/settings`, { withCredentials: true })
       .subscribe({ next: (s) => this.settings.set(s) });
   }
 
