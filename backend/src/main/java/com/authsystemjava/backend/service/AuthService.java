@@ -70,7 +70,7 @@ public class AuthService {
         log.info("User registered: {}", user.getEmail());
     }
     
-    @Transactional
+    @Transactional(noRollbackFor = ApiException.class)
     public void verifyEmail(String rawToken) {
         Token token = tokenRepository
                 .findByTokenAndType(tokenHasher.sha256(rawToken), TokenType.EMAIL_VERIFICATION)
@@ -137,7 +137,7 @@ public class AuthService {
         return generateAuthResponse(user, userAgent);
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = ApiException.class)
     public AuthResponse refresh(String refreshToken) {
     Session session = sessionRepository.findByToken(tokenHasher.sha256(refreshToken))
             .orElseThrow(() -> new ApiException(ErrorCode.INVALID_REFRESH_TOKEN));
@@ -222,7 +222,7 @@ public class AuthService {
         // unknown email: fall through silently — caller always sees success
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = ApiException.class)
     public void resetPassword(String rawToken, String newPassword) {
         Token token = tokenRepository
                 .findByTokenAndType(tokenHasher.sha256(rawToken), TokenType.PASSWORD_RESET)

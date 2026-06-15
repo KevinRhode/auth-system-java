@@ -1,0 +1,25 @@
+# Build output
+target/
+
+# Local & secret config — must never be copied into image layers
+**/application-local.properties
+.env
+.env.*
+
+# Version control / CI
+.git
+.gitignore
+.github
+
+# IDE / editor
+.idea
+.vscode
+*.iml
+
+# Docs & helper files (not needed to build the jar)
+README.md
+HELP.md
+
+# OS cruft
+.DS_Store
+Thumbs.db
