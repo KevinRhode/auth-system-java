@@ -1,14 +1,21 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  OnInit,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { SessionService, SessionDto } from '../core/services/session.service';
 import { AuthService } from '../core/services/auth.service';
-
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
   imports: [DatePipe],
   styleUrl: './dashboard.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="dashboard">
       <div class="dashboard-header">
@@ -19,10 +26,7 @@ import { AuthService } from '../core/services/auth.service';
       <div class="sessions-card">
         <div class="sessions-header">
           <h2>Active Sessions ({{ sessions().length }})</h2>
-          <button
-            class="btn-revoke-all"
-            (click)="revokeAll()"
-            [disabled]="sessions().length === 0">
+          <button class="btn-revoke-all" (click)="revokeAll()" [disabled]="sessions().length === 0">
             Revoke All
           </button>
         </div>
@@ -32,11 +36,9 @@ import { AuthService } from '../core/services/auth.service';
         } @else if (sessions().length === 0) {
           <div class="state-message">No active sessions found.</div>
         } @else {
-          
           <ul class="session-list">
             @for (session of sessions(); track session.id) {
-              <li class="session-item"
-              [class.current-session]="session.id === currentSessionId()">
+              <li class="session-item" [class.current-session]="session.id === currentSessionId()">
                 <div class="session-info">
                   <div class="session-agent-row">
                     <span class="session-agent">{{ parseAgent(session.userAgent) }}</span>
@@ -45,22 +47,20 @@ import { AuthService } from '../core/services/auth.service';
                     }
                   </div>
                   <span class="session-meta">
-                    Started {{ session.createdAt | date: 'MMM d, y, h:mm a' }} ·
-                    Expires {{ session.expiresAt | date: 'MMM d, y' }}
+                    Started {{ session.createdAt | date: 'MMM d, y, h:mm a' }} · Expires
+                    {{ session.expiresAt | date: 'MMM d, y' }}
                   </span>
                 </div>
                 @if (session.id !== currentSessionId()) {
-                  <button class="btn-revoke" (click)="revoke(session.id)">
-                    Revoke
-                  </button>
+                  <button class="btn-revoke" (click)="revoke(session.id)">Revoke</button>
                 }
               </li>
             }
-          </ul>          
+          </ul>
         }
       </div>
     </div>
-  `
+  `,
 })
 export class DashboardComponent implements OnInit {
   private sessionService = inject(SessionService);
@@ -68,9 +68,8 @@ export class DashboardComponent implements OnInit {
 
   currentSessionId = computed(() => this.authService.currentSessionId());
   sessions = signal<SessionDto[]>([]);
-  loading = signal(true);  
-  
-  
+  loading = signal(true);
+
   ngOnInit() {
     this.loadSessions();
   }
@@ -78,17 +77,17 @@ export class DashboardComponent implements OnInit {
   loadSessions() {
     this.loading.set(true);
     this.sessionService.getSessions().subscribe({
-      next: data => {
+      next: (data) => {
         this.sessions.set(data);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false)
+      error: () => this.loading.set(false),
     });
   }
 
   revoke(id: string) {
     this.sessionService.revokeSession(id).subscribe({
-      next: () => this.sessions.update(s => s.filter(s => s.id !== id))
+      next: () => this.sessions.update((s) => s.filter((s) => s.id !== id)),
     });
   }
 
@@ -97,7 +96,7 @@ export class DashboardComponent implements OnInit {
       next: () => {
         this.sessions.set([]);
         this.authService.logout().subscribe();
-      }
+      },
     });
   }
 

@@ -1,4 +1,11 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  OnInit,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../core/services/auth.service';
@@ -17,6 +24,7 @@ interface SettingsSection {
   standalone: true,
   imports: [ConfirmModalComponent],
   styleUrl: './settings.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="settings-layout">
       <aside class="settings-nav">

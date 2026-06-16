@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
@@ -8,6 +8,7 @@ import { AuthService } from '../../core/services/auth.service';
   standalone: true,
   imports: [ReactiveFormsModule, RouterLink],
   styleUrl: './login.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="auth-card">
       <h2>Welcome back</h2>
@@ -24,7 +25,10 @@ import { AuthService } from '../../core/services/auth.service';
       @if (unverified()) {
         <div class="alert alert-warning">
           ⚠️ Please verify your email before logging in.
-          <a routerLink="/verify-email-sent" [queryParams]="{ email: form.get('email')?.value }">
+          <a
+            routerLink="/verify-email-sent"
+            [queryParams]="{ email: $safeNavigationMigration(form.get('email')?.value) }"
+          >
             Resend link
           </a>
         </div>

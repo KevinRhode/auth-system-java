@@ -1,11 +1,12 @@
-import { Component, computed, input, output, signal } from '@angular/core';
+import { Component, computed, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-confirm-modal',
   standalone: true,
   imports: [FormsModule],
-  styleUrl : './confirm-modal.component.scss',
+  styleUrl: './confirm-modal.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (open()) {
       <div class="modal-backdrop" (click)="onCancel()">

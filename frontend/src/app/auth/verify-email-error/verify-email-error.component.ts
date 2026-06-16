@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 @Component({
@@ -6,6 +6,7 @@ import { RouterLink } from '@angular/router';
   standalone: true,
   imports: [RouterLink],
   styleUrl: './verify-email-error.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="auth-card">
       <div class="icon">❌</div>
@@ -15,6 +16,6 @@ import { RouterLink } from '@angular/router';
       </p>
       <a routerLink="/login" class="btn btn-primary">Back to login</a>
     </div>
-  `
+  `,
 })
 export class VerifyEmailErrorComponent {}

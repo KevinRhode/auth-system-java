@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import {
   ReactiveFormsModule,
   FormBuilder,
@@ -32,6 +32,7 @@ function passwordMatch(group: AbstractControl): ValidationErrors | null {
   standalone: true,
   imports: [ReactiveFormsModule, RouterLink],
   styleUrl: './reset-password.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="auth-card">
       @if (state() === 'missing') {

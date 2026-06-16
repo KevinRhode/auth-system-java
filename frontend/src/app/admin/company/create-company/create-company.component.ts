@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { CompanyService } from '../../../core/services/company.service';
@@ -8,6 +8,7 @@ import { CompanyService } from '../../../core/services/company.service';
   standalone: true,
   imports: [ReactiveFormsModule, RouterLink],
   styleUrl: './create-company.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="page">
       <div class="create-card">
@@ -42,7 +43,7 @@ import { CompanyService } from '../../../core/services/company.service';
         </div>
       </div>
     </div>
-  `
+  `,
 })
 export class CreateCompanyComponent {
   form: FormGroup;
@@ -52,10 +53,10 @@ export class CreateCompanyComponent {
   constructor(
     private fb: FormBuilder,
     private companyService: CompanyService,
-    private router: Router
+    private router: Router,
   ) {
     this.form = this.fb.group({
-      name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]]
+      name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
     });
   }
 
@@ -66,7 +67,7 @@ export class CreateCompanyComponent {
 
   getError(field: string): string {
     const control = this.form.get(field);
-    if (control?.errors?.['required'])  return 'Company name is required';
+    if (control?.errors?.['required']) return 'Company name is required';
     if (control?.errors?.['minlength']) return 'Name must be at least 2 characters';
     if (control?.errors?.['maxlength']) return 'Name must be under 100 characters';
     return '';
@@ -81,10 +82,10 @@ export class CreateCompanyComponent {
     this.loading.set(true);
     this.companyService.createCompany(this.form.get('name')?.value).subscribe({
       next: () => this.router.navigate(['/company']),
-      error: err => {
+      error: (err) => {
         this.serverError.set(err.error?.error || 'Failed to create company');
         this.loading.set(false);
-      }
+      },
     });
   }
 }

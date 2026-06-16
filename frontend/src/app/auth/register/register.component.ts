@@ -1,5 +1,12 @@
-import { Component, signal } from '@angular/core';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  ReactiveFormsModule,
+  FormBuilder,
+  FormGroup,
+  Validators,
+  AbstractControl,
+  ValidationErrors,
+} from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 
@@ -19,13 +26,13 @@ function passwordStrength(control: AbstractControl): ValidationErrors | null {
   standalone: true,
   imports: [ReactiveFormsModule, RouterLink],
   styleUrl: './register.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="auth-card">
       <h2>Create an account</h2>
       <p class="subtitle">Sign up to get started</p>
 
       <form [formGroup]="form" (ngSubmit)="onSubmit()">
-
         <div class="form-group">
           <label>Full Name</label>
           <input
@@ -79,14 +86,11 @@ function passwordStrength(control: AbstractControl): ValidationErrors | null {
         <button class="btn btn-primary" type="submit" [disabled]="loading()">
           {{ loading() ? 'Creating account...' : 'Register' }}
         </button>
-
       </form>
 
-      <div class="form-footer">
-        Already have an account? <a routerLink="/login">Sign in</a>
-      </div>
+      <div class="form-footer">Already have an account? <a routerLink="/login">Sign in</a></div>
     </div>
-  `
+  `,
 })
 export class RegisterComponent {
   form: FormGroup;
@@ -96,12 +100,12 @@ export class RegisterComponent {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
   ) {
     this.form = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(12), passwordStrength]]
+      password: ['', [Validators.required, Validators.minLength(12), passwordStrength]],
     });
   }
 
@@ -114,17 +118,28 @@ export class RegisterComponent {
     const control = this.form.get(field);
     if (control?.errors?.['required']) return 'This field is required';
     if (control?.errors?.['email']) return 'Enter a valid email address';
-    if (control?.errors?.['minlength']) return `Minimum ${control.errors['minlength'].requiredLength} characters`;
-    if (control?.errors?.['maxlength']) return `Maximum ${control.errors['maxlength'].requiredLength} characters`;
-    if (control?.errors?.['passwordStrength']) return 'Must contain uppercase, lowercase and a number';
+    if (control?.errors?.['minlength'])
+      return `Minimum ${control.errors['minlength'].requiredLength} characters`;
+    if (control?.errors?.['maxlength'])
+      return `Maximum ${control.errors['maxlength'].requiredLength} characters`;
+    if (control?.errors?.['passwordStrength'])
+      return 'Must contain uppercase, lowercase and a number';
     if (control?.errors?.['server']) return control.errors['server'];
     return '';
   }
 
-  hasLength() { return (this.form.get('password')?.value?.length || 0) >= 12; }
-  hasUpper() { return /[A-Z]/.test(this.form.get('password')?.value || ''); }
-  hasLower() { return /[a-z]/.test(this.form.get('password')?.value || ''); }
-  hasNumber() { return /\d/.test(this.form.get('password')?.value || ''); }
+  hasLength() {
+    return (this.form.get('password')?.value?.length || 0) >= 12;
+  }
+  hasUpper() {
+    return /[A-Z]/.test(this.form.get('password')?.value || '');
+  }
+  hasLower() {
+    return /[a-z]/.test(this.form.get('password')?.value || '');
+  }
+  hasNumber() {
+    return /\d/.test(this.form.get('password')?.value || '');
+  }
 
   onSubmit() {
     if (this.form.invalid) {
@@ -136,9 +151,11 @@ export class RegisterComponent {
     this.serverError.set('');
 
     this.authService.register(this.form.value).subscribe({
-      next: () => this.router.navigate(['/verify-email-sent'],
-        { queryParams: { email: this.form.get('email')?.value } }),
-      error: err => {
+      next: () =>
+        this.router.navigate(['/verify-email-sent'], {
+          queryParams: { email: this.form.get('email')?.value },
+        }),
+      error: (err) => {
         const errorMsg = err.error?.error || '';
 
         if (err.status === 429 || errorMsg === 'RATE_LIMITED') {
@@ -147,7 +164,7 @@ export class RegisterComponent {
           this.serverError.set('Something went wrong. Please try again.');
         }
         this.loading.set(false);
-      }
+      },
     });
   }
 
