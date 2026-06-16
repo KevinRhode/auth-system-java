@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
@@ -8,6 +8,7 @@ import { environment } from '../../../environments/environment';
   standalone: true,
   imports: [RouterLink],
   styleUrl: './verify-email-sent.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="auth-card">
       <div class="icon">📧</div>

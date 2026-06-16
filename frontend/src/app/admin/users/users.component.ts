@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { AdminService } from '../../core/services/admin.service';
 import { UserDto } from '../../core/services/auth.service';
@@ -8,9 +8,9 @@ import { UserDto } from '../../core/services/auth.service';
   standalone: true,
   imports: [DatePipe],
   styleUrl: './users.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="users-page">
-
       <div class="page-header">
         <div>
           <h1>Users</h1>
@@ -47,9 +47,11 @@ import { UserDto } from '../../core/services/auth.service';
                     </div>
                   </td>
                   <td>
-                    <select class="role-select"
+                    <select
+                      class="role-select"
                       [value]="user.role"
-                      (change)="updateRole(user.id, $event)">
+                      (change)="updateRole(user.id, $event)"
+                    >
                       <option value="USER">User</option>
                       <option value="ADMIN">Admin</option>
                       <option value="MODERATOR">Moderator</option>
@@ -64,9 +66,7 @@ import { UserDto } from '../../core/services/auth.service';
                     {{ user.createdAt | date: 'MMM d, y' }}
                   </td>
                   <td>
-                    <button class="btn-delete" (click)="deleteUser(user.id)">
-                      Delete
-                    </button>
+                    <button class="btn-delete" (click)="deleteUser(user.id)">Delete</button>
                   </td>
                 </tr>
               }
@@ -74,9 +74,8 @@ import { UserDto } from '../../core/services/auth.service';
           </table>
         </div>
       }
-
     </div>
-  `
+  `,
 })
 export class UsersComponent implements OnInit {
   users = signal<UserDto[]>([]);
@@ -91,29 +90,27 @@ export class UsersComponent implements OnInit {
   loadUsers() {
     this.loading.set(true);
     this.adminService.getUsers().subscribe({
-      next: users => {
+      next: (users) => {
         this.users.set(users);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false)
+      error: () => this.loading.set(false),
     });
   }
 
   updateRole(id: string, event: Event) {
     const role = (event.target as HTMLSelectElement).value;
     this.adminService.updateRole(id, role).subscribe({
-      next: updated => {
-        this.users.update(list =>
-          list.map(u => u.id === id ? updated : u)
-        );
-      }
+      next: (updated) => {
+        this.users.update((list) => list.map((u) => (u.id === id ? updated : u)));
+      },
     });
   }
 
   deleteUser(id: string) {
     if (!confirm('Are you sure you want to delete this user?')) return;
     this.adminService.deleteUser(id).subscribe({
-      next: () => this.users.update(list => list.filter(u => u.id !== id))
+      next: () => this.users.update((list) => list.filter((u) => u.id !== id)),
     });
   }
 

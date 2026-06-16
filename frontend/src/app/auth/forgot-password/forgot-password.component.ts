@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
@@ -8,6 +8,7 @@ import { AuthService } from '../../core/services/auth.service';
   standalone: true,
   imports: [ReactiveFormsModule, RouterLink],
   styleUrl: './forgot-password.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="auth-card">
       @if (!sent()) {
